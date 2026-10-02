@@ -1,0 +1,26 @@
+<main class="min-h-screen bg-slate-950 text-slate-100">
+  <section class="mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-6 py-16 sm:px-10">
+    <span class="mb-5 w-fit rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-sm font-medium text-emerald-300">
+      Angular · Supabase · Vercel
+    </span>
+    <h1 class="max-w-3xl text-5xl font-bold tracking-tight sm:text-7xl">{{ title() }}</h1>
+    <p class="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
+      La base del proyecto está lista. Configura Supabase y las variables de entorno para comenzar a construir.
+    </p>
+    <div class="mt-10 grid gap-4 sm:grid-cols-3">
+      <article class="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
+        <h2 class="font-semibold">Supabase</h2>
+        <p class="mt-2 text-sm text-slate-400">Cliente configurado para Auth, base de datos y Storage.</p>
+      </article>
+      <article class="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
+        <h2 class="font-semibold">Tailwind CSS</h2>
+        <p class="mt-2 text-sm text-slate-400">Sistema de estilos utilitario listo para usar.</p>
+      </article>
+      <article class="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
+        <h2 class="font-semibold">Resend</h2>
+        <p class="mt-2 text-sm text-slate-400">Función serverless preparada para enviar correos.</p>
+      </article>
+    </div>
+  </section>
+</main>
+<router-outlet />
