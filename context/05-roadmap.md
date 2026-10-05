@@ -1,51 +1,305 @@
-# Roadmap
+# Quini App — Roadmap de implementación
 
-## Fase 0 — Definición de requisitos ✅ cerrada
+Este archivo es la **fuente única de tareas por fase**. Describe qué construir, en qué orden y cómo comprobar que funciona. Las reglas del producto están en [requisitos](01-requirements.md) y [reglas de negocio](02-business-rules.md); el [modelo de datos](03-data-model.md) y el [stack](04-tech-stack.md) completan el contexto.
 
-Requisitos funcionales, reglas de negocio y ambigüedades resueltas. Ver `01-requirements.md` y `02-business-rules.md`.
+## Ubicación, nombre y mantenimiento
 
-## Fase 1 — Modelo de datos y auth ✅ cerrada (parcialmente)
+Se conserva **`context/05-roadmap.md`**: ya pertenece a la documentación del proyecto, mantiene el orden de lectura y evita romper referencias. `ROADMAP.md` en la raíz o `docs/roadmap.md` serían alternativas razonables, pero no son necesarias para este repositorio. No se creará una segunda copia del plan.
 
-- [x] Diseño del esquema relacional (`03-data-model.md`).
-- [x] Script de creación de tablas (`schema.sql`).
-- [x] Proyecto de Supabase creado (organización nueva, configuración inicial revisada).
-- [ ] Políticas RLS por tabla (pendiente).
-- [ ] Función/vista de `standings` con desempate en cascada (pendiente).
-- [ ] Función/trigger de cálculo de `acierto` en predicciones y relleno de `duels` al cerrar resultados (pendiente).
+El README de la raíz enlaza este documento para hacerlo fácil de encontrar. La documentación oficial de GitHub explica el papel del README como punto de entrada y recomienda enlaces relativos a otros archivos; no prescribe un nombre reservado para roadmaps.
 
-## Fase 2 — Gestión de equipos, competiciones y usuarios (admin) — siguiente
+Fuentes consultadas:
 
-- CRUD de equipos con subida de escudo a Storage.
-- CRUD de competiciones.
-- Pantalla de administración de usuarios (cambio de rol, activar/desactivar).
-- Layout reutilizable de tabla + formulario para los tres CRUDs del menú de administración.
+- [GitHub: About the repository README file](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes): descubrimiento de documentación y enlaces relativos.
+- [PrimeNG: Installation](https://primeng.org/installation): integración mediante providers, tema e imports de componentes individuales.
 
-## Fase 3 — Creación de jornada (admin)
+### Cómo usar este plan
 
-- Selección de los 5 partidos (equipos + competición).
-- Emparejamiento de players en duelos 1vs1.
-- Transición de estado de jornada (ABIERTA → EN_CURSO).
-- Envío de correo recordatorio (Resend) al crear la jornada.
+- `[x]` significa entregado y comprobado en el repositorio, o confirmado expresamente como información externa. `[ ]` significa pendiente, incluso si existe un diseño.
+- Los identificadores `F1.1`, `F2.3`, etc. permiten referenciar tareas en commits o incidencias. No requieren introducir una herramienta de gestión adicional.
+- Cada fase tiene objetivo, dependencias, tareas y criterios de aceptación. No se cierra por tener la UI si faltan permisos, integridad o pruebas.
+- Al terminar una tarea, marcarla y registrar aquí cualquier cambio relevante de alcance. Mantener los requisitos y reglas sincronizados cuando cambie una decisión de producto.
+- Las rutas propuestas son orientativas; no hay que crear carpetas vacías ni abstracciones genéricas para cumplir el plan.
+- No hay fechas ni estimaciones cerradas: el progreso se mide con entregables verificables.
 
-## Fase 4 — Pronósticos (player)
+## Estado real de partida
 
-- Formulario 1X2 por partido, bloqueado fuera del estado ABIERTA y tras el primer envío.
+| Elemento | Estado |
+|---|---|
+| Requisitos y reglas principales | Documentados; aclaraciones incorporadas |
+| Angular 21 standalone, routing, TypeScript estricto y Tailwind 4 | Base configurada |
+| Cliente Supabase y configuración pública en runtime | Preparados; no equivalen a un flujo de auth implementado |
+| Proyecto Supabase | Creado según información del desarrollador; esquema remoto por verificar |
+| Esquema SQL | Diseño inicial en `schema.sql`; sin migraciones versionadas en el repositorio |
+| RLS | Activación incluida en el script; faltan políticas y comprobación del remoto |
+| PrimeNG | Elegido; pendiente de instalar |
+| Pantallas y rutas funcionales | Pendientes; solo existe la portada inicial |
+| Resend | Endpoint base en `api/send-email.mjs`; no protegido ni integrado con jornadas |
+| Vercel | Configuración de build y fallback SPA; despliegue funcional completo por validar |
+| Pruebas | Pruebas básicas del componente raíz; faltan cobertura funcional y de seguridad |
 
-## Fase 5 — Resultados y motor de puntuación
+## Orden y dependencias
 
-- Pantalla de admin para introducir resultado real de cada partido.
-- Cálculo automático de aciertos, resolución de duelos y puntos.
+| Fase | Entregable | Estado | Depende de |
+|---|---|---|---|
+| 0 | Definición de producto y decisiones | Base definida; quedan validaciones operativas | — |
+| 1 | Backend seguro, auth, perfiles y base de UI | Parcial / siguiente prioridad | 0 |
+| 2 | Administración de catálogos, usuarios e invitaciones | Pendiente | 1 |
+| 3 | Temporada inicial y creación/inicio de jornadas | Pendiente | 1, 2 |
+| 4 | Envío y consulta de pronósticos | Pendiente | 3 |
+| 5 | Resultados, duelos y correcciones administrativas | Pendiente | 3, 4 |
+| 6 | Clasificación, estadísticas y ciclo de temporadas | Pendiente | 5 |
+| 7 | Recordatorios por correo seguros | Pendiente | 1, 3; puede adelantarse tras estas fases |
+| 8 | Validación integral, pulido y lanzamiento | Pendiente | 1–7 |
 
-## Fase 6 — Clasificación y temporadas
+El motor de puntuación y la clasificación ya tienen reglas definidas, pero se implementan en sus fases funcionales, no como prerrequisito de los primeros CRUDs. Responsive, accesibilidad, seguridad y pruebas se trabajan en todas las fases; la fase 8 no es su primera aplicación.
 
-- Tabla de clasificación con desempate en cascada.
-- Cierre de temporada y creación de una nueva, con histórico accesible.
+## Fase 0 — Definición de producto y decisiones
 
-## Fase 7 — Notificaciones
+**Objetivo:** disponer de un contrato de comportamiento claro, sin confundir decisiones de producto con propuestas técnicas.
 
-- Integración completa de Resend para recordatorios (y opcionalmente SMTP de Auth).
+### Tareas
 
-## Fase 8 — Pulido visual y despliegue
+- [x] **F0.1 — Documentar alcance y roles.** Juego recreativo entre amigos; 5 partidos comunes por jornada; admins que también pueden competir; cierre manual; histórico conservado.
+- [x] **F0.2 — Definir puntuación y estadísticas.** Victoria/empate/derrota, excepciones por ausencia de pronóstico y penalización de 0 aciertos y 5 fallos.
+- [x] **F0.3 — Incorporar las aclaraciones de producto.** Desempate de tres o más por aciertos totales, rival virtual por baja, correcciones del admin sin límite temporal y PrimeNG como UI.
+- [ ] **F0.4 — Validar ejemplos de desempate antes de F6.** Para dos jugadores usar balance de victorias directas; para tres o más usar aciertos de temporada. Confirmar la interpretación de continuar la cascada sin volver al average directo si queda un subgrupo de dos. Si persiste igualdad, acordar cómo mostrar posiciones compartidas sin inventar mérito deportivo.
+- [ ] **F0.5 — Concretar el momento efectivo de una baja antes de F2/F3.** Precisar qué ocurre con jornadas `ABIERTA` y `EN_CURSO`, incluidas predicciones ya enviadas. El histórico resuelto se conserva y los duelos futuros usan rival virtual; registrar cuándo se aplica la sustitución.
+- [ ] **F0.6 — Confirmar los casos extremos antes de F5.** El plan interpreta que un jugador real que no pronostica contra `jugador_undefined` recibe 0 puntos y 5 fallos; confirmar también qué hacer si ambos lados de un duelo futuro quedan desactivados. No bloquear los CRUDs de equipos por estas decisiones.
+- [ ] **F0.7 — Definir visibilidad de datos antes de F1/F4.** Acordar cuándo se pueden ver los pronósticos del rival, qué datos de perfiles pueden consultar otros jugadores y quién puede acceder al histórico. No exponer correos o invitaciones por comodidad.
 
-- Revisión responsive mobile-first.
-- Despliegue en Vercel.
+### Criterios de aceptación
+
+- Las reglas principales están sincronizadas en `01-requirements.md` y `02-business-rules.md`.
+- Cada interpretación operativa pendiente tiene una tarea y una fase límite; no se convierte silenciosamente en requisito definitivo.
+- No se amplía el alcance con apuestas, pagos, APIs deportivas, chat o solicitudes de cambio automatizadas.
+
+## Fase 1 — Backend seguro, autenticación y base de UI
+
+**Objetivo:** permitir que un usuario invitado entre y gestione su perfil, con permisos fiables y una estructura Angular mínima reutilizable.
+
+**Dependencias:** fase 0; F0.7 antes de cerrar las políticas de lectura.
+
+### 1A. Esquema y entorno Supabase
+
+- [x] **F1.1 — Diseñar las entidades iniciales.** Perfiles, invitaciones, equipos, competiciones, temporadas, jornadas, partidos, predicciones y duelos en `03-data-model.md` y `schema.sql`.
+- [x] **F1.2 — Preparar infraestructura local.** Angular, Tailwind, singleton Supabase, generación de `public/env.js` y configuración de Vercel disponibles. Proyecto Supabase creado según el desarrollador.
+- [ ] **F1.3 — Verificar y versionar el esquema.** Revisar qué existe realmente en Supabase remoto antes de aplicar SQL. Incorporar un baseline y los cambios en `supabase/migrations/`; evitar ejecutar a ciegas un script con tipos/tablas ya existentes. Documentar cómo levantar o actualizar el entorno y añadir datos de prueba reproducibles sin secretos ni usuarios reales.
+- [ ] **F1.4 — Reforzar integridad y preservación del histórico.** Revisar `ON DELETE CASCADE`, rangos de aciertos/puntos, número positivo de jornada y transiciones válidas. Planificar las operaciones transaccionales que garantizarán cinco partidos y participación única; implementar sus detalles en F3/F4. No permitir borrados físicos ordinarios de registros con histórico.
+- [ ] **F1.5 — Diseñar la persistencia del rival virtual.** Elegir una representación explícita en duelos que admita un lado virtual y preserve la identidad sustituida. No crear una cuenta ficticia en Auth ni depender del `activo` actual. Preparar las restricciones y metadatos necesarios para el comportamiento que se entregue en F2/F3/F5.
+
+### 1B. Registro, perfiles y autorización
+
+- [ ] **F1.6 — Implementar registro seguro por invitación.** Validar el código en servidor y consumirlo una sola vez con protección frente a registros concurrentes. Vincular perfil y cuenta Auth; impedir crear cuentas utilizables saltándose la UI y tratar errores sin dejar invitaciones consumidas o perfiles incoherentes. No aceptar `role` o `activo` enviados por el cliente.
+- [ ] **F1.7 — Preparar el primer admin.** Definir un procedimiento manual/servidor reproducible para asignar el rol inicial fuera del registro normal. Nunca publicar credenciales o claves privilegiadas.
+- [ ] **F1.8 — Implementar RLS y permisos de funciones.** Matriz por tabla para `anon`, player activo, admin activo y usuario desactivado; operaciones SELECT/INSERT/UPDATE/DELETE según requisitos. Proteger columnas privilegiadas con permisos de columna o RPC controladas, además de RLS. Evitar políticas recursivas al consultar el rol y revisar `SECURITY DEFINER`, `search_path` y grants.
+- [ ] **F1.9 — Implementar estado de sesión y rutas.** Servicio de auth con signals, restauración de sesión, cambios de sesión, login/logout y guards de usuario/admin. Mostrar carga inicial y redirigir correctamente; los guards no sustituyen a los permisos del backend.
+- [ ] **F1.10 — Crear registro, login y recuperación de contraseña.** Formularios con validaciones, errores comprensibles y prevención de envíos duplicados. Configurar callback y redirects de Auth para `localhost:4200` y Vercel; comprobar el flujo de enlace caducado o inválido.
+- [ ] **F1.11 — Crear edición del perfil propio.** Username, avatar y correo; usar Auth para cambiar email y mantener `profiles.email` sincronizado con el cambio efectivo, no con un valor arbitrario del cliente. Rol de solo lectura y sin botón de baja para players.
+- [ ] **F1.12 — Configurar Storage y sus permisos.** Escudos públicos y estrategia de avatares documentada; escrituras de escudos solo admin y de avatar solo propietario/admin según el flujo. Validar tipo/tamaño, rutas de objetos y borrado/sustitución de imágenes sin romper referencias.
+
+### 1C. PrimeNG y estructura frontend
+
+- [ ] **F1.13 — Instalar PrimeNG compatible con Angular 21.** Comprobar peer dependencies, instalar la librería y el paquete de temas correspondiente a esa versión, configurar `providePrimeNG` y preset Aura o equivalente. Importar por componente; iconos e integración extra con Tailwind solo si se necesitan. Verificar build y pruebas antes de dar la instalación por válida.
+- [ ] **F1.14 — Crear el shell mobile-first.** Navegación del player y acceso al menú admin condicionado al rol; encabezado, contenido, estados de carga/error/vacío y notificaciones. Tailwind para layout; PrimeNG styled para controles. Un admin conserva también el acceso a jugar.
+- [ ] **F1.15 — Organizar por funcionalidades.** Mantener `core/` para auth/config/Supabase y agrupar pantallas en `features/` según necesidad. Servicios pequeños, tipado de respuestas y tipos de base de datos generados tras las migraciones; signals/computed para estado y `rxResource()` donde simplifique lecturas. Sin NgRx ni repositorios genéricos prematuros.
+
+### Criterios de aceptación
+
+- Registro válido crea una cuenta y perfil coherentes; código inválido/usado o dos usos simultáneos no permiten saltarse la invitación.
+- Login, logout, recuperación y edición de perfil funcionan; un player no puede convertirse en admin ni reactivarse con una petición directa.
+- Un desactivado no puede participar en operaciones protegidas, incluso con una sesión previamente emitida.
+- Las pruebas de RLS usan roles reales de cliente; no basta con probar como `service_role`.
+- Escudos y avatares respetan permisos; no hay secretos privados en `public/env.js` ni en el bundle.
+- PrimeNG y shell funcionan en móvil y PC; build y pruebas frontend pasan.
+
+## Fase 2 — Administración de equipos, competiciones, usuarios e invitaciones
+
+**Objetivo:** proporcionar al admin los catálogos y participantes necesarios para preparar jornadas.
+
+**Dependencias:** fase 1; resolver F0.5 antes de implementar efectos de una baja.
+
+### Tareas
+
+- [ ] **F2.1 — Crear el área de administración.** Rutas protegidas, navegación por entidades y patrón coherente de tabla/listado, detalle y formulario. Reutilizar solo lo que se repita de verdad, no un CRUD universal configurable.
+- [ ] **F2.2 — Implementar equipos.** Listar, buscar, crear y editar nombre/escudo; subir y sustituir imagen con feedback. Permitir equipos de cualquier liga y selecciones. Activar/desactivar sin borrar el histórico; indicar registros inactivos y errores de Storage.
+- [ ] **F2.3 — Implementar competiciones.** Crear/editar nombres, controlar duplicados y activar/desactivar. Las competiciones inactivas permanecen en partidos antiguos pero no se ofrecen para nuevos partidos.
+- [ ] **F2.4 — Implementar usuarios.** Listado y detalle con rol/estado; cambios de rol por admins. Desactivar sin borrar Auth/perfil/pronósticos. Definir salvaguarda para no perder el último admin activo y no aplicar una baja histórica de forma retroactiva.
+- [ ] **F2.5 — Aplicar los efectos de las bajas.** Incorporar el momento efectivo acordado, mostrar aviso de duelos afectados y registrar la sustitución virtual cuando corresponda. Conservar los pronósticos ya enviados; no reasignar sus estadísticas a `jugador_undefined`.
+- [ ] **F2.6 — Gestionar invitaciones.** Generar códigos desde el servidor con autorización admin; listar disponibles/usados y facilitar copia. No permitir reutilización ni lectura del catálogo por players/anon. Mantener el alcance de códigos de un solo uso; expiración y cuotas solo si se deciden después.
+- [ ] **F2.7 — Completar la experiencia de formularios.** Validaciones, confirmaciones de desactivación, indicadores de guardado, búsqueda y estados vacíos. Los errores no deben dejar la tabla desactualizada ni perder el formulario.
+- [ ] **F2.8 — Probar permisos e histórico.** Intentar CRUDs como player y usuario desactivado; comprobar que cambios de nombre/estado no borran partidos, duelos o pronósticos antiguos.
+
+### Criterios de aceptación
+
+- Admin puede mantener catálogos, usuarios e invitaciones desde PC y móvil; player no puede hacerlo ni por peticiones directas.
+- No se seleccionan equipos/competiciones inactivos para jornadas nuevas, pero se conservan las referencias antiguas.
+- Desactivar un usuario conserva lo enviado y produce solo los efectos futuros acordados.
+- Cualquier fallo de guardado o subida se comunica y permite reintentar sin duplicados.
+
+## Fase 3 — Temporada inicial, creación e inicio de jornadas
+
+**Objetivo:** publicar una jornada válida con cinco partidos y duelos completos, y cerrarla para pronósticos mediante una acción admin.
+
+**Dependencias:** fases 1 y 2; F0.5 y representación virtual definida.
+
+### Tareas
+
+- [ ] **F3.1 — Crear/seleccionar la temporada inicial.** Flujo mínimo admin para una temporada activa y su nombre/fechas; decidir y garantizar si solo puede existir una activa. La gestión completa de cierre e histórico se entrega en F6. No crear jornadas en temporadas finalizadas.
+- [ ] **F3.2 — Crear el formulario de los cinco partidos.** Selección de local, visitante y competición activos; equipos distintos; validación de exactamente cinco. Incorporar un orden persistente de los partidos para que admin y players vean la misma secuencia.
+- [ ] **F3.3 — Crear emparejamientos.** Selección manual de participantes reales activos, incluidos admins que compitan; cada participante aparece una sola vez y no juega contra sí mismo. Cobertura completa del grupo participante y rival virtual únicamente cuando corresponda a una baja excepcional, no como descanso arbitrario.
+- [ ] **F3.4 — Publicar de forma transaccional.** Guardar jornada, cinco partidos y duelos en una única operación autorizada. Validar invariantes en servidor, no solo en el formulario; un error revierte todo. Proteger número único de jornada por temporada y evitar duplicados por doble clic/reintentos.
+- [ ] **F3.5 — Delimitar edición estructural.** Definir antes de habilitarla cuándo se pueden cambiar equipos, partidos o emparejamientos de una jornada publicada. No alterar silenciosamente partidos que ya tengan pronósticos. MVP: creación y consulta; cualquier edición posterior necesita reglas explícitas.
+- [ ] **F3.6 — Implementar `ABIERTA → EN_CURSO`.** Acción admin con confirmación, fecha efectiva y comprobación de estado/temporada. Serializarla con los envíos de predicciones para que no exista una ventana de escritura tardía.
+- [ ] **F3.7 — Mostrar jornada y duelo.** Listado/detalle, cinco partidos, estado y rival del usuario; lista admin de quién ha enviado o falta. Mostrar `jugador_undefined` como rival virtual, no como una cuenta rota.
+- [ ] **F3.8 — Preparar el recordatorio sin enviar todavía.** Reservar la acción opcional y el identificador de jornada para F7. La creación funciona sin servicio de correo; no duplicar aquí la integración de Resend.
+
+### Criterios de aceptación
+
+- No se publica una jornada con 4/6 partidos, equipos idénticos, participantes repetidos ni duelos incompletos.
+- Fallar a mitad de la creación no deja una jornada parcial visible.
+- Todos los participantes ven los mismos cinco partidos y un duelo inequívoco.
+- Solo un admin inicia la jornada; a partir de ese cambio no entra ningún primer envío de player.
+
+## Fase 4 — Pronósticos de players
+
+**Objetivo:** permitir un único envío completo de 1X2 por jornada abierta y consultar lo enviado.
+
+**Dependencias:** fase 3 y visibilidad de pronósticos acordada en F0.7.
+
+### Tareas
+
+- [ ] **F4.1 — Crear el formulario de juego.** Cinco partidos con escudos/nombres/competición, controles 1/X/2 claros y accesibles para móvil. Mostrar rival y estado; exigir una elección en cada partido.
+- [ ] **F4.2 — Implementar envío atómico en servidor.** Comprobar identidad, participación real, perfil activo, temporada/jornada y ausencia de envío previo. Guardar los cinco valores juntos, sin aceptar un `player_id` ajeno ni partidos de otra jornada; controlar concurrencia con inicio de jornada y doble envío.
+- [ ] **F4.3 — Bloquear cambios del player.** Confirmación previa al envío, recibo/resumen posterior y controles de solo lectura al enviarse o cerrarse la jornada. Impedir UPDATE/DELETE mediante llamadas directas, no únicamente con botones deshabilitados.
+- [ ] **F4.4 — Mostrar ausencias y resultados.** Distinguir formulario no enviado de uno enviado con cero aciertos. Antes de resolver, no mostrar ausencia como cinco fallos ya computados. Tras resolver, mostrar aciertos/fallos y puntos calculados.
+- [ ] **F4.5 — Cubrir el rival virtual.** Mismo formulario y obligación de pronosticar; explicar que con cero aciertos enviados obtiene un punto, no una victoria automática.
+- [ ] **F4.6 — Probar errores y permisos.** Envío incompleto, conexión fallida, reintento, acceso a predicciones ajenas, jugador fuera de duelo, desactivado y cierre concurrente.
+
+### Criterios de aceptación
+
+- Cada participante tiene cero o cinco predicciones por jornada, nunca un envío parcial.
+- Un player no puede modificar/borrar un envío ni insertar después de `EN_CURSO`.
+- La UI comunica claramente que el envío es definitivo para el player y mantiene una consulta fiable de lo guardado.
+- La información del rival respeta la política de visibilidad definida.
+
+## Fase 5 — Resultados, motor de puntuación y correcciones
+
+**Objetivo:** resolver jornadas y corregir pronósticos con resultados reproducibles y consistentes, también en histórico.
+
+**Dependencias:** fases 3 y 4; confirmar casos extremos de F0.6.
+
+### Tareas
+
+- [ ] **F5.1 — Crear entrada de resultados manuales.** Pantalla admin para los cinco resultados 1X2. Permitir guardar progreso sin resolver duelos hasta que todos estén completos; impedir que un player cambie resultados.
+- [ ] **F5.2 — Implementar el motor en servidor.** Calcular `acierto`, totales y fallos; resolver jugadores reales con las reglas de ausencia; tratar aparte el rival virtual. Derivar fallos de no enviados sin fabricar pronósticos falsos.
+- [ ] **F5.3 — Resolver la jornada de forma atómica e idempotente.** Con los cinco resultados, rellenar resultado/aciertos/puntos de cada duelo y pasar a `FINALIZADA`. Sobrescribir valores derivados al recalcular, no sumarlos sobre los anteriores. Bloquear carreras con otras correcciones.
+- [ ] **F5.4 — Implementar corrección administrativa de pronósticos.** Admin puede editar lo enviado sin solicitud ni límite de estado, incluso en temporada cerrada. Confirmación explícita del impacto y registro de admin, fecha y valores anteriores/nuevos; no exigir reabrir la jornada para players.
+- [ ] **F5.5 — Recalcular datos afectados.** Una corrección en una jornada resuelta actualiza aciertos, fallos, resultado/puntos del duelo y consultas de clasificación/estadísticas. Una corrección antes de los resultados no debe adelantar puntos. No invalidar los otros cuatro pronósticos del formulario.
+- [ ] **F5.6 — Acordar correcciones adicionales.** Antes de habilitar cambios de resultados reales ya finalizados o introducir un envío completo para quien no pronosticó, definir expresamente esos permisos y su recálculo; la autorización confirmada cubre corregir pronósticos, no inventa estos flujos.
+- [ ] **F5.7 — Mostrar el resultado de jornada.** Comparativa de pronósticos/aciertos y puntos de ambos lados; indicadores claros de ausencia y rival virtual. Permitir al admin revisar errores de resolución sin ocultarlos.
+- [ ] **F5.8 — Automatizar pruebas del motor.** Cubrir la matriz siguiente, ausencia penalizada, corrección tras finalizar y recálculo repetido. Validar lógica SQL y permisos, no solo funciones de frontend.
+
+### Matriz mínima de puntuación
+
+Los escenarios de jugadores reales se prueban también intercambiando A/B. Para quien no envía siempre son 0 aciertos y 5 fallos.
+
+| Duelo | Envíos | Aciertos | Puntos | Verificación |
+|---|---|---|---|---|
+| Real A vs real B | Ambos | 4 / 2 | 3 / 0 | Victoria normal; fallos 1 / 3 |
+| Real A vs real B | Ambos | 0 / 0 | 1 / 1 | Empate con cinco fallos cada uno |
+| Real A vs real B | Solo A | 0 / 0 | 3 / 0 | Victoria automática por ausencia real |
+| Real A vs real B | Ninguno | 0 / 0 | 0 / 0 | No hay empate puntuable |
+| Real A vs virtual | Solo A | 2 / 0 | 3 / 0 | Virtual no suma ni aparece en standings |
+| Real A vs virtual | Solo A | 0 / 0 | 1 / 0 | Empate especial, no victoria automática |
+| Real A vs virtual | Ninguno | 0 / 0 | 0 / 0 | Interpretación pendiente de confirmar en F0.6 |
+
+### Criterios de aceptación
+
+- Sin los cinco resultados no hay jornada resuelta ni puntos provisionales contabilizados como definitivos.
+- La matriz pasa y diferencia ausencia real de rival virtual.
+- Recalcular dos veces produce exactamente el mismo estado y clasificación.
+- Corregir un pronóstico en histórico actualiza el duelo y estadísticas, registra el cambio y no concede escritura ordinaria a players.
+- Un cambio de `activo` actual no transforma retrospectivamente duelos históricos.
+
+## Fase 6 — Clasificación, estadísticas y temporadas
+
+**Objetivo:** consultar posiciones correctas por temporada y conservar el histórico al empezar otra.
+
+**Dependencias:** fase 5; F0.4 validada.
+
+### Tareas
+
+- [ ] **F6.1 — Implementar la clasificación SQL.** Vista/función derivada de duelos resueltos, filtrada por temporada. Incluir participantes sin puntos, mantener jugadores desactivados que participaron y excluir rival virtual. Evitar joins que multipliquen puntos o mezclen temporadas.
+- [ ] **F6.2 — Implementar la cascada de desempates.** Para dos, balance de victorias directas; para tres o más, total de aciertos de temporada sin restar fallos. Continuar con diferencia aciertos/fallos y jornadas ganadas conforme a lo validado en F0.4. Si una pareja no se enfrentó, seguir la cascada. Orden de presentación estable en igualdad deportiva.
+- [ ] **F6.3 — Derivar estadísticas completas.** Puntos, duelos ganados/empatados/perdidos y participación, aciertos, fallos y enfrentamientos. No contar el 0/0 por doble ausencia como empate deportivo por defecto; distinguir resultado no puntuable. Duelo ganado al virtual cuenta como victoria del jugador real; el virtual no tiene ficha estadística.
+- [ ] **F6.4 — Crear tabla y detalle del player.** Tabla legible en móvil y PC, explicación de criterios y navegación a jornadas/estadísticas. Consultas con estados de carga/error/vacío y permisos acordados.
+- [ ] **F6.5 — Implementar cierre de temporada.** Acción admin con confirmación y fecha de fin; comprobar jornadas pendientes de resolver y tratar explícitamente ese bloqueo antes del cierre. Detener nuevas jornadas/envíos; conservar consulta y excepciones de corrección admin.
+- [ ] **F6.6 — Crear nueva temporada e histórico.** Nueva clasificación desde cero, sin duplicar ni borrar resultados anteriores. Selector de temporada y consultas aisladas; aprovechar el flujo mínimo de creación de F3 sin mantener dos implementaciones.
+- [ ] **F6.7 — Probar clasificación y aislamiento.** Empates de dos con múltiples encuentros, grupos de tres/cuatro, igualdad en aciertos, ausencia con cinco fallos, igualdad completa, bajas, virtual y correcciones en temporada cerrada. Verificar que nueva temporada no modifica la anterior.
+
+### Criterios de aceptación
+
+- Clasificación coincide con ejemplos calculados a mano y responde correctamente a correcciones.
+- Fallos por ausencia participan en la diferencia; no se confunde total de aciertos con esa diferencia en empates múltiples.
+- Temporadas cerradas son consultables y no admiten actividad ordinaria; las correcciones admin quedan trazadas.
+- Jugadores desactivados conservan su historial y el virtual nunca ocupa una posición.
+
+## Fase 7 — Recordatorios por correo
+
+**Objetivo:** enviar recordatorios opcionales de jornadas abiertas sin exponer un servicio de envío arbitrario.
+
+**Dependencias:** fases 1 y 3. Puede desarrollarse antes de F5/F6 si interesa probarlo pronto.
+
+### Tareas
+
+- [ ] **F7.1 — Proteger el endpoint existente.** Reutilizar `api/send-email.mjs` en Vercel. Verificar token Supabase y rol admin activo en servidor; rechazar usuarios anónimos/players/desactivados. No confiar en un rol enviado en el payload ni crear otra Edge Function para lo mismo.
+- [ ] **F7.2 — Restringir el contrato al recordatorio.** Recibir un identificador de jornada y obtener asunto, contenido y destinatarios autorizados desde servidor; no aceptar libremente correos, HTML o asuntos de cualquier cliente. Escapar valores interpolados y no exponer la lista de emails.
+- [ ] **F7.3 — Configurar Resend.** Dominio/remitente verificados y variables privadas en Vercel. Respetar límites del proveedor y tamaño del grupo; revisar el límite actual de diez destinatarios y agrupar sin revelar direcciones de amigos entre sí.
+- [ ] **F7.4 — Integrar la acción admin.** Opción de enviar tras crear la jornada y acción manual de recordatorio. El fallo del correo no revierte una jornada creada correctamente; mostrar resultado y permitir reintento seguro.
+- [ ] **F7.5 — Añadir protección mínima de abuso/reintentos.** Límite de frecuencia y registro de envíos suficiente para evitar duplicados accidentales. No incorporar colas complejas para este grupo pequeño; documentar tratamiento de errores y resultados parciales.
+- [ ] **F7.6 — Evaluar SMTP de Auth.** Configurar Resend como SMTP de Supabase si se necesita para producción. Es opcional y distinto del endpoint de recordatorios; verificar entrega de recuperación/confirmación y límites reales.
+- [ ] **F7.7 — Probar el flujo.** Solo admin puede enviar; solo destinatarios autorizados; secretos ausentes del navegador; errores de configuración/proveedor con mensajes seguros; botón doble y reintento no producen una tormenta de mensajes.
+
+### Criterios de aceptación
+
+- Ninguna petición pública puede convertir el endpoint en un relé de correo arbitrario.
+- Recordatorio llega con enlace a la jornada y remitente válido; las direcciones no se revelan entre destinatarios.
+- Crear una jornada no depende de disponibilidad de Resend y el admin conoce el estado del envío.
+
+## Fase 8 — Validación integral, pulido y lanzamiento
+
+**Objetivo:** publicar un MVP utilizable por el grupo, con operación sencilla y sin fallos críticos conocidos.
+
+**Dependencias:** fases 1–7. El SMTP opcional no bloquea el lanzamiento si Auth funciona con la configuración de correo elegida.
+
+### Tareas
+
+- [ ] **F8.1 — Recorrer el flujo completo.** Admin crea catálogos/temporada/jornada; usuarios se registran, pronostican, reciben recordatorio, consultan resultados/clasificación; admin cierra y abre nueva temporada. Incluir corrección posterior y rival virtual.
+- [ ] **F8.2 — Revisar responsive y accesibilidad.** Móvil como uso principal y PC para mantenimiento: navegación, tablas, formularios, touch targets, foco, teclado, etiquetas, contraste, estados deshabilitados y mensajes de error. No depender solo del color para 1/X/2 o aciertos.
+- [ ] **F8.3 — Ejecutar pruebas y build.** `pnpm test --watch=false` y `pnpm run build`; comprobar el build Vercel con variables públicas de prueba (`pnpm run build:vercel`). Añadir smoke tests de los flujos críticos y pruebas SQL/RLS reproducibles. CI mínima para build/pruebas si se habilita; no marcar completo con fallos pendientes.
+- [ ] **F8.4 — Auditar seguridad práctica.** Invitación imposible de saltar, permisos de columnas/RLS/RPC/Storage, usuarios desactivados, cierre concurrente, endpoint email protegido y ausencia de claves privadas o correos innecesarios en cliente/logs. Revisar configuración local y remota, no solo código.
+- [ ] **F8.5 — Validar despliegue Vercel.** Variables por entorno, generación de `env.js`, recarga en rutas profundas, callback de Auth y ruta `/api/` fuera del fallback SPA. Probar Preview antes de Production; comprobar budgets y evitar dependencias UI innecesarias.
+- [ ] **F8.6 — Documentar operación y recuperación.** README con instalación, migraciones, primer admin, dominios/redirects, Storage y Resend. Procedimiento sencillo de respaldo/exportación y corrección de datos acorde al plan Supabase; confirmar las capacidades reales del plan Free, sin prometer backups no disponibles.
+- [ ] **F8.7 — Hacer una prueba con amigos.** Jornada de prueba sin datos de producción, verificar que entienden envío definitivo, horarios manuales y puntuación. Resolver incidencias críticas antes de abrir la temporada real.
+
+### Criterios de aceptación
+
+- Flujos principales funcionan de extremo a extremo con usuarios reales de prueba y roles distintos.
+- Build, pruebas frontend y pruebas de reglas/permisos pasan; no hay blockers funcionales o de seguridad abiertos.
+- Se puede desplegar y operar siguiendo el README, sin pasos secretos ni modificaciones manuales no documentadas.
+- El grupo puede usar la app desde móvil y el admin mantenerla cómodamente desde PC.
+
+## Definición común de tarea terminada
+
+Una tarea implementada se marca `[x]` solo cuando:
+
+1. Cumple los requisitos y no contradice las reglas de negocio.
+2. Sus permisos e invariantes se aplican en servidor cuando corresponde.
+3. Tiene errores/carga/vacío resueltos y una UI responsive si incluye pantalla.
+4. Sus casos relevantes están probados; build y pruebas relacionados pasan.
+5. Migraciones, tipos y documentación afectados están sincronizados.
+
+## Próxima acción recomendada
+
+Empezar por **F1.3: verificar el estado real de Supabase y crear el baseline de migraciones**. Después resolver registro/perfiles/RLS y montar PrimeNG/auth antes de conectar los CRUDs. No desplegar el endpoint de correo sin protegerlo ni dar por finalizada la fase 1 por tener únicamente las tablas diseñadas.

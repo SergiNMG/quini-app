@@ -1,0 +1,6 @@
+# Only the root package; this file configures pnpm's dependency build policy.
+allowBuilds:
+  '@parcel/watcher': true
+  esbuild: true
+  lmdb: true
+  msgpackr-extract: true

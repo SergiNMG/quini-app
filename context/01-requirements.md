@@ -26,14 +26,15 @@
 - El admin crea la jornada y decide cuándo comienza.
 - Cada jornada tiene **exactamente 5 partidos**, cada uno entre 2 equipos, de cualquier competición del catálogo.
 - Todos los players pronostican los **mismos 5 partidos** de la jornada.
-- El admin empareja a los players en duelos 1 vs 1 al crear la jornada. El número de players es siempre par; nadie descansa.
+- El admin empareja a los participantes en duelos 1 vs 1 al crear la jornada, incluidos los admins que compitan. Normalmente el número es par y nadie descansa; una baja excepcional puede dejar un duelo contra el rival virtual `jugador_undefined` (ver `02-business-rules.md`).
 - Al crear la jornada, el admin puede enviar un correo recordatorio a los players para que pronostiquen.
 
 ## Pronósticos (players)
 
 - Cada player pronostica el resultado 1X2 de los 5 partidos antes de que el admin dé la jornada por comenzada.
-- Una vez enviado un pronóstico, **el player no puede modificarlo**. Solo el admin puede modificarlo, a petición del player.
-- Si un player no pronostica antes de que empiece la jornada, se cuenta como 0 aciertos (ver reglas de puntuación).
+- El envío incluye los 5 pronósticos y se guarda de forma atómica. Una vez enviado, **el player no puede modificarlo ni eliminarlo**.
+- El admin puede corregir pronósticos en cualquier momento cuando lo considere necesario, incluso tras finalizar la jornada o temporada, con trazabilidad y recálculo de los datos afectados.
+- Si un player no pronostica antes de que empiece la jornada, se cuenta como **0 aciertos y 5 fallos** (ver reglas de puntuación).
 
 ## Resultados
 
@@ -46,13 +47,15 @@ Ver el detalle completo en `02-business-rules.md`. Resumen:
 - Cada duelo 1vs1 compara el nº de aciertos de ambos players en los 5 partidos de la jornada.
 - Victoria = 3 puntos, derrota = 0 puntos, empate = 1 punto cada uno.
 - Clasificación estilo tabla de liga: usuario + puntos acumulados en la temporada.
-- Desempate en cascada: average directo → diferencia aciertos/fallos → jornadas ganadas.
+- Desempate de dos jugadores: average directo → diferencia aciertos/fallos → jornadas ganadas.
+- Desempate de tres o más jugadores: total de aciertos de temporada → diferencia aciertos/fallos → jornadas ganadas.
+- La ausencia de pronóstico de un jugador real y el rival virtual tienen reglas de puntuación diferentes, detalladas en `02-business-rules.md`.
 
 ## Temporadas
 
 - El juego dura una temporada, que finaliza al acabar la temporada futbolística o cuando el admin decide cerrarla.
 - El admin puede crear una nueva temporada para reiniciar el juego.
-- Se mantiene el **historial completo de temporadas anteriores**, consultable desde un menú de temporadas con datos y estadísticas.
+- Se mantiene el **historial completo de temporadas anteriores**, consultable desde un menú de temporadas con datos y estadísticas. El cierre bloquea la actividad ordinaria, pero permite las correcciones excepcionales de pronósticos del admin con recálculo.
 
 ## Administración
 
