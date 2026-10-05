@@ -30,9 +30,11 @@ Primero se ordena por puntos totales de la temporada, de mayor a menor. Para un 
 2. **Diferencia de pronósticos acertados/fallados:** `total_aciertos - total_fallos`, de mayor a menor.
 3. **Número de jornadas ganadas:** duelos ganados durante la temporada, de mayor a menor.
 
-Si el primer criterio de un grupo de tres o más deja a dos jugadores empatados, se continúa con diferencia aciertos/fallos y jornadas ganadas; no se reinicia la cascada con average directo. Esta interpretación operativa evita un orden no transitivo y debe validarse con ejemplos antes de implementar la clasificación.
+Si el primer criterio de un grupo de tres o más deja a dos jugadores empatados, se continúa con diferencia aciertos/fallos y jornadas ganadas; **no se reinicia la cascada con average directo**. El tamaño del grupo se fija al agrupar inicialmente por puntos, no al comparar cada pareja.
 
-Si todos los criterios siguen empatados, existe igualdad deportiva. La interfaz puede usar un orden estable de presentación, pero no debe inventar otro desempate deportivo.
+Si todos los criterios siguen empatados, existe igualdad deportiva y se muestra **posición compartida con saltos**: `1, 2, 2, 4`. Dentro del empate, ordenar visualmente por `username` ascendente (y por ID para estabilidad técnica si hiciera falta), sin convertir ese orden en mérito deportivo.
+
+Los ejemplos de aceptación y los datos con resultados esperados están en [validación de fase 0](06-phase-0-acceptance.md). Si dos jugadores tienen los mismos aciertos y el mismo número de jornadas contabilizadas, también tienen la misma diferencia aciertos/fallos; se conserva el criterio de diferencia aunque en ese caso no los separe.
 
 Aciertos, fallos, jornadas ganadas y enfrentamientos directos deben poder consultarse también en estadísticas. `jugador_undefined` nunca aparece en la clasificación.
 
@@ -55,13 +57,49 @@ Aciertos, fallos, jornadas ganadas y enfrentamientos directos deben poder consul
 
 El jugador real acumula `5 - aciertos` fallos; si no pronostica, acumula 5. Solo la victoria de 3 puntos cuenta como jornada ganada. El empate contra el rival virtual da un punto exclusivamente al jugador real.
 
-La interpretación operativa para el jugador real que no pronostica es conservar la regla general de no sumar; confirmar este caso en las pruebas de aceptación antes de implementar.
+**Caso confirmado: real sin envío contra virtual.** Recibe 0 puntos, 0 aciertos y 5 fallos; no obtiene el punto del empate reservado a quien sí pronosticó.
+
+**Caso confirmado: virtual contra virtual.** Se conserva el registro como duelo no puntuable con 0/0 puntos. Ninguno suma aciertos, fallos, victorias, empates o posiciones. No se elimina ni se interpreta como empate deportivo.
 
 ### Límite temporal de una baja
 
-La decisión de producto cubre los **duelos futuros**. Antes de implementar la desactivación se debe concretar el tratamiento de una jornada ya `ABIERTA` o `EN_CURSO`, especialmente si el jugador ya envió pronósticos. No se debe deducir la identidad del rival usando solo el `activo` actual: hay que conservar qué participante era real o virtual en cada duelo y desde cuándo se aplica la baja.
+La sustitución se aplica **solo a jornadas creadas después de la desactivación**, cuando corresponda conservar una plaza virtual. Desactivar no transforma duelos de jornadas que ya existen/publicadas, aunque estén `ABIERTA` o `EN_CURSO`.
+
+| Estado/situación al desactivar | Efecto |
+|---|---|
+| Jornada existente `FINALIZADA` | Se conserva el duelo real, sus puntos y estadísticas |
+| Jornada existente `EN_CURSO` | Se conserva el duelo real; lo enviado se evalúa normalmente al resolver |
+| Jornada existente `ABIERTA` | Se conserva el duelo real y lo enviado; el desactivado no puede realizar nuevos envíos propios |
+| Jornada creada después de la baja | Rival virtual cuando corresponda; no se aceptan pronósticos del desactivado |
+
+En una jornada existente abierta, si el desactivado no había enviado, se aplican las reglas de **ausencia de un jugador real**, no las del virtual. Si ya había enviado, sus pronósticos siguen contando y puede obtener puntos al resolverse. No se reasignan al virtual ni se borran.
+
+Registrar el momento efectivo de la baja y conservar en cada duelo qué participante era real o virtual. La creación de jornadas y las bajas concurrentes deben fijar ese límite de forma transaccional, sin decidir posteriormente a partir del `activo` actual.
 
 Es un caso excepcional para un grupo de amigos, no un sistema de altas y bajas competitivo avanzado.
+
+## Visibilidad y privacidad
+
+La aplicación es **privada para usuarios autenticados activos**. El histórico completo de temporadas del grupo está disponible para todos ellos; no hay clasificación ni histórico públicos.
+
+| Datos/operación | Anónimo | Player activo | Admin activo | Usuario desactivado |
+|---|---|---|---|---|
+| Login, registro con invitación y recuperación | Sí | Disponible cuando corresponda | Disponible cuando corresponda | Recuperar credenciales no reactiva la cuenta |
+| Jornadas, duelos, resultados, clasificación e histórico | No | Sí | Sí | No |
+| Pronósticos en `ABIERTA` | No | Solo los propios | Todos | No |
+| Pronósticos en `EN_CURSO` o `FINALIZADA` | No | Todos los del grupo | Todos | No |
+| Identidad de otros jugadores | No | Solo username/avatar | Datos necesarios para gestionar perfiles | No |
+| Perfil privado y correo | No | Solo el propio | Todos los necesarios para gestión | No |
+| Catálogo/gestión de invitaciones | No | No | Sí | No |
+| Configuración y acciones administrativas | No | No | Sí | No |
+
+- La revelación de pronósticos ocurre al pasar la jornada a `EN_CURSO`, no al guardar resultados ni al primer envío de un rival. Incluye pronósticos conservados de jugadores desactivados.
+- El admin puede revisar pronósticos siempre, incluso durante `ABIERTA`, porque necesita gestionarlos y corregirlos.
+- El grupo puede ver username/avatar de participantes desactivados para entender el histórico, pero eso no les concede a estos acceso al juego.
+- Correos, rol/estado privados, códigos de invitación y auditoría no se exponen a otros players. Consultar identidad ajena no concede lectura de la fila privada completa de `profiles`.
+- Validar el código de invitación al registrarse no permite listar códigos ni consultar quién los utilizó; la validación se realiza mediante un flujo de servidor limitado.
+- La condición de usuario activo se comprueba en backend, incluso si la sesión fue emitida antes de la baja.
+- Los escudos servidos mediante Storage público siguen siendo archivos no sensibles: conocer su URL no da acceso anónimo a perfiles, jornadas o histórico. La política de almacenamiento de avatares se concreta en F1.12 respetando la privacidad del perfil.
 
 ## Inmutabilidad y correcciones de pronósticos
 

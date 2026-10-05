@@ -26,7 +26,7 @@ Fuentes consultadas:
 
 | Elemento | Estado |
 |---|---|
-| Requisitos y reglas principales | Documentados; aclaraciones incorporadas |
+| Requisitos y reglas principales | Fase 0 cerrada; decisiones confirmadas y ejemplos de aceptación documentados |
 | Angular 21 standalone, routing, TypeScript estricto y Tailwind 4 | Base configurada |
 | Cliente Supabase y configuración pública en runtime | Preparados; no equivalen a un flujo de auth implementado |
 | Proyecto Supabase | Creado según información del desarrollador; esquema remoto por verificar |
@@ -42,7 +42,7 @@ Fuentes consultadas:
 
 | Fase | Entregable | Estado | Depende de |
 |---|---|---|---|
-| 0 | Definición de producto y decisiones | Base definida; quedan validaciones operativas | — |
+| 0 | Definición de producto y decisiones | Completada | — |
 | 1 | Backend seguro, auth, perfiles y base de UI | Parcial / siguiente prioridad | 0 |
 | 2 | Administración de catálogos, usuarios e invitaciones | Pendiente | 1 |
 | 3 | Temporada inicial y creación/inicio de jornadas | Pendiente | 1, 2 |
@@ -56,6 +56,8 @@ El motor de puntuación y la clasificación ya tienen reglas definidas, pero se 
 
 ## Fase 0 — Definición de producto y decisiones
 
+**Estado:** completada. Las decisiones fueron confirmadas por el desarrollador y los ejemplos están en [validación de fase 0](06-phase-0-acceptance.md). La validación funcional no equivale a tener motor SQL o RLS implementados.
+
 **Objetivo:** disponer de un contrato de comportamiento claro, sin confundir decisiones de producto con propuestas técnicas.
 
 ### Tareas
@@ -63,22 +65,22 @@ El motor de puntuación y la clasificación ya tienen reglas definidas, pero se 
 - [x] **F0.1 — Documentar alcance y roles.** Juego recreativo entre amigos; 5 partidos comunes por jornada; admins que también pueden competir; cierre manual; histórico conservado.
 - [x] **F0.2 — Definir puntuación y estadísticas.** Victoria/empate/derrota, excepciones por ausencia de pronóstico y penalización de 0 aciertos y 5 fallos.
 - [x] **F0.3 — Incorporar las aclaraciones de producto.** Desempate de tres o más por aciertos totales, rival virtual por baja, correcciones del admin sin límite temporal y PrimeNG como UI.
-- [ ] **F0.4 — Validar ejemplos de desempate antes de F6.** Para dos jugadores usar balance de victorias directas; para tres o más usar aciertos de temporada. Confirmar la interpretación de continuar la cascada sin volver al average directo si queda un subgrupo de dos. Si persiste igualdad, acordar cómo mostrar posiciones compartidas sin inventar mérito deportivo.
-- [ ] **F0.5 — Concretar el momento efectivo de una baja antes de F2/F3.** Precisar qué ocurre con jornadas `ABIERTA` y `EN_CURSO`, incluidas predicciones ya enviadas. El histórico resuelto se conserva y los duelos futuros usan rival virtual; registrar cuándo se aplica la sustitución.
-- [ ] **F0.6 — Confirmar los casos extremos antes de F5.** El plan interpreta que un jugador real que no pronostica contra `jugador_undefined` recibe 0 puntos y 5 fallos; confirmar también qué hacer si ambos lados de un duelo futuro quedan desactivados. No bloquear los CRUDs de equipos por estas decisiones.
-- [ ] **F0.7 — Definir visibilidad de datos antes de F1/F4.** Acordar cuándo se pueden ver los pronósticos del rival, qué datos de perfiles pueden consultar otros jugadores y quién puede acceder al histórico. No exponer correos o invitaciones por comodidad.
+- [x] **F0.4 — Validar ejemplos de desempate antes de F6.** Confirmado: dos jugadores usan balance de victorias directas; tres o más usan aciertos de temporada sin reiniciar el directo al quedar dos. Igualdad completa: posiciones compartidas `1, 2, 2, 4`, con username solo para orden visual. Ejemplos A–E documentados y aritmética revisada en `06-phase-0-acceptance.md`.
+- [x] **F0.5 — Concretar el momento efectivo de una baja antes de F2/F3.** Confirmado: la sustitución virtual solo se aplica a jornadas creadas después de la baja. Jornadas existentes ABIERTA/EN_CURSO/FINALIZADA conservan jugadores reales y lo enviado; el desactivado pierde acceso protegido y nuevos envíos propios. Escenarios temporales documentados para implementar el límite transaccional.
+- [x] **F0.6 — Confirmar los casos extremos antes de F5.** Confirmado: real sin envío contra virtual recibe 0 puntos y 5 fallos. Doble virtual: conservar duelo no puntuable 0/0, sin estadísticas ni clasificación para nadie. Matriz de aceptación actualizada.
+- [x] **F0.7 — Definir visibilidad de datos antes de F1/F4.** Confirmado: juego e histórico solo para usuarios autenticados activos. ABIERTA: pronósticos propios; desde EN_CURSO: todos los del grupo; admin activo puede revisarlos siempre. Identidad ajena limitada a username/avatar, sin correo ni perfil privado; invitaciones/auditoría exclusivas del admin. Matriz y escenarios API documentados.
 
 ### Criterios de aceptación
 
 - Las reglas principales están sincronizadas en `01-requirements.md` y `02-business-rules.md`.
-- Cada interpretación operativa pendiente tiene una tarea y una fase límite; no se convierte silenciosamente en requisito definitivo.
+- F0.4–F0.7 están confirmadas, con ejemplos de aceptación consistentes; ya no quedan decisiones pendientes dentro de esta fase.
 - No se amplía el alcance con apuestas, pagos, APIs deportivas, chat o solicitudes de cambio automatizadas.
 
 ## Fase 1 — Backend seguro, autenticación y base de UI
 
 **Objetivo:** permitir que un usuario invitado entre y gestione su perfil, con permisos fiables y una estructura Angular mínima reutilizable.
 
-**Dependencias:** fase 0; F0.7 antes de cerrar las políticas de lectura.
+**Dependencias:** fase 0 completada; aplicar la matriz de visibilidad confirmada en F0.7 al implementar las políticas de lectura.
 
 ### 1A. Esquema y entorno Supabase
 
@@ -117,7 +119,7 @@ El motor de puntuación y la clasificación ya tienen reglas definidas, pero se 
 
 **Objetivo:** proporcionar al admin los catálogos y participantes necesarios para preparar jornadas.
 
-**Dependencias:** fase 1; resolver F0.5 antes de implementar efectos de una baja.
+**Dependencias:** fase 1; aplicar el límite temporal de bajas confirmado en F0.5.
 
 ### Tareas
 
@@ -125,7 +127,7 @@ El motor de puntuación y la clasificación ya tienen reglas definidas, pero se 
 - [ ] **F2.2 — Implementar equipos.** Listar, buscar, crear y editar nombre/escudo; subir y sustituir imagen con feedback. Permitir equipos de cualquier liga y selecciones. Activar/desactivar sin borrar el histórico; indicar registros inactivos y errores de Storage.
 - [ ] **F2.3 — Implementar competiciones.** Crear/editar nombres, controlar duplicados y activar/desactivar. Las competiciones inactivas permanecen en partidos antiguos pero no se ofrecen para nuevos partidos.
 - [ ] **F2.4 — Implementar usuarios.** Listado y detalle con rol/estado; cambios de rol por admins. Desactivar sin borrar Auth/perfil/pronósticos. Definir salvaguarda para no perder el último admin activo y no aplicar una baja histórica de forma retroactiva.
-- [ ] **F2.5 — Aplicar los efectos de las bajas.** Incorporar el momento efectivo acordado, mostrar aviso de duelos afectados y registrar la sustitución virtual cuando corresponda. Conservar los pronósticos ya enviados; no reasignar sus estadísticas a `jugador_undefined`.
+- [ ] **F2.5 — Aplicar los efectos de las bajas.** Registrar el momento efectivo y bloquear acceso protegido/nuevos envíos. No cambiar participantes de jornadas ya publicadas, incluso abiertas/en curso; mantener el cómputo de lo enviado. Aplicar rival virtual únicamente en jornadas creadas después y mostrar este alcance al admin. No reasignar pronósticos ni estadísticas antiguas a `jugador_undefined`.
 - [ ] **F2.6 — Gestionar invitaciones.** Generar códigos desde el servidor con autorización admin; listar disponibles/usados y facilitar copia. No permitir reutilización ni lectura del catálogo por players/anon. Mantener el alcance de códigos de un solo uso; expiración y cuotas solo si se deciden después.
 - [ ] **F2.7 — Completar la experiencia de formularios.** Validaciones, confirmaciones de desactivación, indicadores de guardado, búsqueda y estados vacíos. Los errores no deben dejar la tabla desactualizada ni perder el formulario.
 - [ ] **F2.8 — Probar permisos e histórico.** Intentar CRUDs como player y usuario desactivado; comprobar que cambios de nombre/estado no borran partidos, duelos o pronósticos antiguos.
@@ -147,7 +149,7 @@ El motor de puntuación y la clasificación ya tienen reglas definidas, pero se 
 
 - [ ] **F3.1 — Crear/seleccionar la temporada inicial.** Flujo mínimo admin para una temporada activa y su nombre/fechas; decidir y garantizar si solo puede existir una activa. La gestión completa de cierre e histórico se entrega en F6. No crear jornadas en temporadas finalizadas.
 - [ ] **F3.2 — Crear el formulario de los cinco partidos.** Selección de local, visitante y competición activos; equipos distintos; validación de exactamente cinco. Incorporar un orden persistente de los partidos para que admin y players vean la misma secuencia.
-- [ ] **F3.3 — Crear emparejamientos.** Selección manual de participantes reales activos, incluidos admins que compitan; cada participante aparece una sola vez y no juega contra sí mismo. Cobertura completa del grupo participante y rival virtual únicamente cuando corresponda a una baja excepcional, no como descanso arbitrario.
+- [ ] **F3.3 — Crear emparejamientos.** Selección manual de participantes reales activos, incluidos admins que compitan; cada participante aparece una sola vez y no juega contra sí mismo. Cobertura completa del grupo participante y rival virtual únicamente cuando corresponda a una baja anterior a crear la jornada, no como descanso arbitrario. Representar un doble virtual como registro no puntuable cuando corresponda conservar ese duelo.
 - [ ] **F3.4 — Publicar de forma transaccional.** Guardar jornada, cinco partidos y duelos en una única operación autorizada. Validar invariantes en servidor, no solo en el formulario; un error revierte todo. Proteger número único de jornada por temporada y evitar duplicados por doble clic/reintentos.
 - [ ] **F3.5 — Delimitar edición estructural.** Definir antes de habilitarla cuándo se pueden cambiar equipos, partidos o emparejamientos de una jornada publicada. No alterar silenciosamente partidos que ya tengan pronósticos. MVP: creación y consulta; cualquier edición posterior necesita reglas explícitas.
 - [ ] **F3.6 — Implementar `ABIERTA → EN_CURSO`.** Acción admin con confirmación, fecha efectiva y comprobación de estado/temporada. Serializarla con los envíos de predicciones para que no exista una ventana de escritura tardía.
@@ -187,7 +189,7 @@ El motor de puntuación y la clasificación ya tienen reglas definidas, pero se 
 
 **Objetivo:** resolver jornadas y corregir pronósticos con resultados reproducibles y consistentes, también en histórico.
 
-**Dependencias:** fases 3 y 4; confirmar casos extremos de F0.6.
+**Dependencias:** fases 3 y 4; aplicar los casos extremos confirmados en F0.6.
 
 ### Tareas
 
@@ -212,7 +214,8 @@ Los escenarios de jugadores reales se prueban también intercambiando A/B. Para 
 | Real A vs real B | Ninguno | 0 / 0 | 0 / 0 | No hay empate puntuable |
 | Real A vs virtual | Solo A | 2 / 0 | 3 / 0 | Virtual no suma ni aparece en standings |
 | Real A vs virtual | Solo A | 0 / 0 | 1 / 0 | Empate especial, no victoria automática |
-| Real A vs virtual | Ninguno | 0 / 0 | 0 / 0 | Interpretación pendiente de confirmar en F0.6 |
+| Real A vs virtual | Ninguno | 0 / 0 | 0 / 0 | Real: 5 fallos; no empate puntuable |
+| Virtual vs virtual | Ninguno | 0 / 0 | 0 / 0 | Conservar duelo no puntuable; sin estadísticas para nadie |
 
 ### Criterios de aceptación
 
@@ -231,7 +234,7 @@ Los escenarios de jugadores reales se prueban también intercambiando A/B. Para 
 ### Tareas
 
 - [ ] **F6.1 — Implementar la clasificación SQL.** Vista/función derivada de duelos resueltos, filtrada por temporada. Incluir participantes sin puntos, mantener jugadores desactivados que participaron y excluir rival virtual. Evitar joins que multipliquen puntos o mezclen temporadas.
-- [ ] **F6.2 — Implementar la cascada de desempates.** Para dos, balance de victorias directas; para tres o más, total de aciertos de temporada sin restar fallos. Continuar con diferencia aciertos/fallos y jornadas ganadas conforme a lo validado en F0.4. Si una pareja no se enfrentó, seguir la cascada. Orden de presentación estable en igualdad deportiva.
+- [ ] **F6.2 — Implementar la cascada de desempates.** Para dos, balance de victorias directas; para tres o más, total de aciertos de temporada sin restar fallos. Continuar con diferencia aciertos/fallos y jornadas ganadas sin reiniciar el directo en subgrupos de dos. Si una pareja no se enfrentó, seguir la cascada. Igualdad completa: posición compartida con saltos (`1, 2, 2, 4`), username solo para orden visual. Automatizar los ejemplos A–E de `06-phase-0-acceptance.md`.
 - [ ] **F6.3 — Derivar estadísticas completas.** Puntos, duelos ganados/empatados/perdidos y participación, aciertos, fallos y enfrentamientos. No contar el 0/0 por doble ausencia como empate deportivo por defecto; distinguir resultado no puntuable. Duelo ganado al virtual cuenta como victoria del jugador real; el virtual no tiene ficha estadística.
 - [ ] **F6.4 — Crear tabla y detalle del player.** Tabla legible en móvil y PC, explicación de criterios y navegación a jornadas/estadísticas. Consultas con estados de carga/error/vacío y permisos acordados.
 - [ ] **F6.5 — Implementar cierre de temporada.** Acción admin con confirmación y fecha de fin; comprobar jornadas pendientes de resolver y tratar explícitamente ese bloqueo antes del cierre. Detener nuevas jornadas/envíos; conservar consulta y excepciones de corrección admin.

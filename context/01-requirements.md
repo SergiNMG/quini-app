@@ -10,6 +10,7 @@
 - Un admin puede ser también player (compite en jornadas como cualquier otro).
 - Los usuarios pueden editar su perfil (imagen, correo, nombre) y recuperar la contraseña si la olvidan.
 - Los players **no pueden darse de baja ellos mismos**; solo el admin puede eliminar (desactivar) un jugador.
+- La baja bloquea acceso protegido y nuevos envíos inmediatamente, pero no modifica duelos de jornadas ya publicadas. El rival virtual solo se aplica en jornadas creadas después de la baja.
 
 ## Gestión de equipos (admin)
 
@@ -35,6 +36,7 @@
 - El envío incluye los 5 pronósticos y se guarda de forma atómica. Una vez enviado, **el player no puede modificarlo ni eliminarlo**.
 - El admin puede corregir pronósticos en cualquier momento cuando lo considere necesario, incluso tras finalizar la jornada o temporada, con trazabilidad y recálculo de los datos afectados.
 - Si un player no pronostica antes de que empiece la jornada, se cuenta como **0 aciertos y 5 fallos** (ver reglas de puntuación).
+- Mientras la jornada está `ABIERTA`, un player solo ve sus pronósticos; desde `EN_CURSO`, todos los usuarios activos pueden ver los pronósticos del grupo. El admin activo puede revisarlos siempre.
 
 ## Resultados
 
@@ -50,6 +52,8 @@ Ver el detalle completo en `02-business-rules.md`. Resumen:
 - Desempate de dos jugadores: average directo → diferencia aciertos/fallos → jornadas ganadas.
 - Desempate de tres o más jugadores: total de aciertos de temporada → diferencia aciertos/fallos → jornadas ganadas.
 - La ausencia de pronóstico de un jugador real y el rival virtual tienen reglas de puntuación diferentes, detalladas en `02-business-rules.md`.
+- En empates múltiples no se reinicia el average directo al quedar dos igualados. Si toda la cascada sigue empatada, comparten posición con saltos (`1, 2, 2, 4`); el orden visual por username no decide un ganador.
+- Real sin envío contra virtual: 0 puntos y 5 fallos. Virtual contra virtual: se conserva un duelo no puntuable 0/0, sin estadísticas para nadie.
 
 ## Temporadas
 
@@ -60,6 +64,13 @@ Ver el detalle completo en `02-business-rules.md`. Resumen:
 ## Administración
 
 - El admin dispone de un menú de administración para gestionar usuarios, equipos y competiciones (CRUD completo sobre todos los datos).
+
+## Visibilidad y privacidad
+
+- La aplicación y el histórico del grupo son privados: requieren autenticación y perfil activo. Un desactivado no conserva acceso por disponer de una sesión antigua.
+- Los players solo consultan username/avatar de otros usuarios; su propio perfil y correo sí son accesibles. El admin activo accede a los datos necesarios para gestión.
+- Correos ajenos, rol/estado privados, invitaciones y auditoría no son visibles para otros players. El catálogo de invitaciones es exclusivo del admin; el registro usa validación limitada en servidor.
+- La matriz de permisos está en `02-business-rules.md` y los ejemplos confirmados en `06-phase-0-acceptance.md`.
 
 ## No funcionales
 

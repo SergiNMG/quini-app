@@ -23,8 +23,9 @@ La app debe ser **funcional y estética, sin complicaciones**. No se busca la ex
 | `03-data-model.md` | Modelo de datos y su relación con `schema.sql` |
 | `04-tech-stack.md` | Stack tecnológico y justificación |
 | `05-roadmap.md` | Plan único de tareas por fase, dependencias, estado real y criterios de aceptación |
+| `06-phase-0-acceptance.md` | Decisiones confirmadas de fase 0 y ejemplos para las futuras pruebas de aceptación |
 | `schema.sql` | Script SQL de creación de tablas (Supabase/Postgres) |
 
 ## Estado actual
 
-Requisitos principales y esquema inicial definidos; quedan validaciones operativas señaladas en el roadmap. Proyecto de Supabase creado según el desarrollador y base Angular/Supabase/Tailwind/Vercel preparada. **La fase 1 está parcialmente realizada, no cerrada**: faltan verificar/versionar el esquema remoto, registro por invitación, perfiles, políticas RLS, flujo de auth y PrimeNG. Las pantallas funcionales y el motor de puntuación están pendientes. Ver el [roadmap detallado](05-roadmap.md) para tareas, dependencias y criterios de aceptación.
+**Fase 0 cerrada**: requisitos y decisiones operativas confirmados, con ejemplos de aceptación en `06-phase-0-acceptance.md`. Esquema inicial definido. Proyecto de Supabase creado según el desarrollador y base Angular/Supabase/Tailwind/Vercel preparada. **La fase 1 está parcialmente realizada, no cerrada**: faltan verificar/versionar el esquema remoto, registro por invitación, perfiles, políticas RLS, flujo de auth y PrimeNG. Las pantallas funcionales y el motor de puntuación están pendientes. Ver el [roadmap detallado](05-roadmap.md) para tareas, dependencias y criterios de aceptación.
