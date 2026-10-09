@@ -1,20 +1,19 @@
 -- ============================================================
 -- QUINI APP - Esquema de base de datos (Supabase / PostgreSQL)
 -- ============================================================
--- REFERENCIA HISTORICA DEL DISENO: no volver a ejecutar este archivo.
--- El esquema ejecutable vive en supabase/migrations/.
--- Baseline: 20261005212317_initial_schema.sql (tipos calificados con public).
--- Ver supabase/README.md para inspeccion, validacion local y despliegue.
--- Sin politicas RLS ni reglas completas de negocio todavia.
+-- Initial baseline for an empty application schema, verified remotely before creation.
+-- Apply through Supabase migrations, not by rerunning context/schema.sql.
+-- No policies, Auth provisioning or business-rule functions yet (F1.4–F1.8 follow).
+-- Keep this migration immutable once applied; add subsequent changes as new migrations.
 
 -- ============================================================
 -- TIPOS ENUMERADOS
 -- ============================================================
-create type user_role as enum ('ADMIN', 'PLAYER');
-create type matchday_estado as enum ('ABIERTA', 'EN_CURSO', 'FINALIZADA');
-create type season_estado as enum ('ACTIVA', 'FINALIZADA');
-create type resultado_1x2 as enum ('1', 'X', '2');
-create type duel_resultado as enum ('A_GANA', 'B_GANA', 'EMPATE');
+create type public.user_role as enum ('ADMIN', 'PLAYER');
+create type public.matchday_estado as enum ('ABIERTA', 'EN_CURSO', 'FINALIZADA');
+create type public.season_estado as enum ('ACTIVA', 'FINALIZADA');
+create type public.resultado_1x2 as enum ('1', 'X', '2');
+create type public.duel_resultado as enum ('A_GANA', 'B_GANA', 'EMPATE');
 
 -- ============================================================
 -- PROFILES (extiende auth.users de Supabase Auth)
@@ -24,7 +23,7 @@ create table public.profiles (
   username text not null unique,
   email text not null unique,
   avatar_url text,
-  role user_role not null default 'PLAYER',
+  role public.user_role not null default 'PLAYER',
   activo boolean not null default true,
   invitation_code_used text,
   created_at timestamptz not null default now(),
@@ -90,7 +89,7 @@ comment on table public.teams is 'Equipos y selecciones, gestionados por el admi
 create table public.seasons (
   id uuid primary key default gen_random_uuid(),
   nombre text not null unique,
-  estado season_estado not null default 'ACTIVA',
+  estado public.season_estado not null default 'ACTIVA',
   fecha_inicio date not null default current_date,
   fecha_fin date,
   created_at timestamptz not null default now()
@@ -105,7 +104,7 @@ create table public.matchdays (
   id uuid primary key default gen_random_uuid(),
   season_id uuid not null references public.seasons(id) on delete cascade,
   numero integer not null,
-  estado matchday_estado not null default 'ABIERTA',
+  estado public.matchday_estado not null default 'ABIERTA',
   fecha_creacion timestamptz not null default now(),
   fecha_inicio timestamptz,
   unique (season_id, numero)
@@ -122,7 +121,7 @@ create table public.matches (
   competition_id uuid not null references public.competitions(id),
   equipo_local_id uuid not null references public.teams(id),
   equipo_visitante_id uuid not null references public.teams(id),
-  resultado_real resultado_1x2,
+  resultado_real public.resultado_1x2,
   created_at timestamptz not null default now(),
   constraint chk_equipos_distintos check (equipo_local_id <> equipo_visitante_id)
 );
@@ -136,7 +135,7 @@ create table public.predictions (
   id uuid primary key default gen_random_uuid(),
   match_id uuid not null references public.matches(id) on delete cascade,
   player_id uuid not null references public.profiles(id) on delete cascade,
-  pronostico resultado_1x2 not null,
+  pronostico public.resultado_1x2 not null,
   acierto boolean,
   created_at timestamptz not null default now(),
   unique (match_id, player_id)
@@ -156,7 +155,7 @@ create table public.duels (
   aciertos_b integer,
   puntos_a integer,
   puntos_b integer,
-  resultado duel_resultado,
+  resultado public.duel_resultado,
   created_at timestamptz not null default now(),
   constraint chk_players_distintos check (player_a_id <> player_b_id)
 );

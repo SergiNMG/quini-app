@@ -8,7 +8,16 @@
     "build:vercel": "node scripts/create-runtime-config.mjs && ng build",
     "config:local": "node --env-file-if-exists=.env scripts/create-runtime-config.mjs",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "db:start:local": "supabase start",
+    "db:stop:local": "supabase stop",
+    "db:reset:local": "supabase db reset --local",
+    "db:test": "node scripts/supabase-development.mjs test",
+    "db:deploy:dev": "node scripts/supabase-development.mjs deploy",
+    "db:lint:dev": "node scripts/supabase-development.mjs lint",
+    "test:db-runner": "node --test scripts/supabase-development.test.mjs",
+    "db:inspect:remote": "supabase db query --linked --file supabase/inspect-schema.sql",
+    "db:plan:remote": "supabase db push --dry-run --linked --skip-vault"
   },
   "private": true,
   "packageManager": "pnpm@10.34.6",
@@ -32,6 +41,7 @@
     "jsdom": "^28.0.0",
     "postcss": "^8.5.28",
     "prettier": "^3.8.1",
+    "supabase": "2.119.0",
     "tailwindcss": "^4.3.3",
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"

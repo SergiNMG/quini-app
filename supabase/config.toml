@@ -1,3 +1,6 @@
+# OPTIONAL local stack configuration. The primary workflow uses remote development.
+# This file does not automatically configure the linked Cloud project's Auth/Storage.
+# See supabase/README.md; Docker is not required by the primary workflow.
 # For detailed configuration reference documentation, visit:
 # https://supabase.com/docs/guides/local-development/cli/config
 # A string used to distinguish different Supabase projects on the same host. Defaults to the

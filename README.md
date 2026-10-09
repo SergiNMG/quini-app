@@ -16,7 +16,7 @@ La infraestructura inicial no implica que auth o las pantallas funcionales esté
 - **Gestor de paquetes:** pnpm 10.34.6 (fijado en `package.json`)
 - **Frontend:** Angular 21 (standalone, routing y TypeScript estricto)
 - **Estilos:** Tailwind CSS 4
-- **Backend:** Supabase (Auth, Postgres y Storage)
+- **Backend:** Supabase (Auth, Postgres y Storage); CLI 2.119.0 fijado como dependencia de desarrollo
 - **Correo:** función serverless de Vercel con Resend
 - **Hosting:** Vercel con fallback SPA
 
@@ -61,19 +61,25 @@ const { data, error } = await supabase.auth.getSession();
 
 Solo se exponen en el navegador `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY`. Configura Row Level Security (RLS) en cada tabla antes de consumirla desde el cliente. Nunca uses una `service_role` en Angular.
 
-La configuración del CLI está en `supabase/config.toml`. La integración Git de Supabase Cloud no enlaza automáticamente el CLI local; ejecuta una vez lo siguiente con el **Project Reference** de tu instancia:
+Trabajamos con **Angular local y Supabase remoto de desarrollo**, sin Docker obligatorio. El procedimiento completo está en **[Supabase: desarrollo remoto y migraciones](supabase/README.md)**. El esquema ejecutable está en `supabase/migrations/`; `context/schema.sql` es una referencia histórica.
 
 ```bash
-pnpm dlx supabase@latest login
-pnpm dlx supabase@latest link --project-ref TU_PROJECT_REF
+pnpm exec supabase login
+pnpm exec supabase link --project-ref TU_PROJECT_REF_DE_DESARROLLO
+pnpm exec supabase migration list --linked
+pnpm db:inspect:remote
+pnpm db:plan:remote       # dry-run; no aplica SQL
+pnpm run db:deploy:dev    # aplica migraciones SOLO al desarrollo autorizado
+pnpm db:test             # 15 comprobaciones pgTAP remotas con rollback, sin Docker
+pnpm run db:lint:dev
+pnpm run test:db-runner   # pruebas locales del parser y guardia de entorno
 ```
 
-Crea los cambios de esquema como migraciones versionadas y súbelos al proyecto enlazado:
+Los comandos de despliegue/pruebas/lint verifican que el proyecto enlazado coincide con `supabase/development.json`. El identificador del proyecto no es una credencial. El baseline está **aplicado y validado en desarrollo**; F1.3 está cerrada, pero las políticas RLS y los flujos funcionales siguen pendientes.
 
-```bash
-pnpm dlx supabase@latest migration new nombre_del_cambio
-pnpm dlx supabase@latest db push
-```
+Los fixtures se insertan únicamente dentro de la transacción de prueba y se revierten; no quedan usuarios ni catálogos ficticios persistentes. No ejecutar resets remotos ni subir seeds a producción. Antes del lanzamiento se creará un proyecto de producción separado.
+
+Crear nuevos cambios con `pnpm exec supabase migration new nombre_del_cambio`, revisar el plan y seguir la guía antes de desplegar. El stack local queda opcional en los scripts `db:*:local`.
 
 ## Correo con Resend
 
@@ -98,6 +104,7 @@ Ejemplo de payload:
    - `SUPABASE_PUBLISHABLE_KEY`
    - `RESEND_API_KEY`
    - `RESEND_FROM_EMAIL`
+   Preview debe usar Supabase de desarrollo. Antes del lanzamiento real, crear Supabase de producción y usar sus valores exclusivamente en Vercel Production; no compartir datos/fixtures de desarrollo con producción.
 3. Despliega. `vercel.json` instala con `corepack pnpm install --frozen-lockfile` y ejecuta `corepack pnpm run build:vercel`, usando la versión fijada en `package.json`. El build genera `public/env.js` con las dos variables públicas y publica `dist/quini-app/browser`. Elimina cualquier override antiguo de instalación/build con npm en el panel de Vercel para que se aplique la configuración del repositorio.
 
 No incluyas secretos de Resend ni la clave `service_role` de Supabase en `public/env.js` ni en variables con prefijos públicos.

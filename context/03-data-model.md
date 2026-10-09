@@ -1,6 +1,8 @@
 # Modelo de datos
 
-El esquema inicial está en [`schema.sql`](schema.sql). Este documento resume sus entidades y las ampliaciones necesarias. El script todavía no incorpora RLS detallado, rival virtual, trazabilidad ni todas las invariantes de negocio; no representa un backend completo. La implementación deberá versionarse en `supabase/migrations/`, comprobando primero el estado del proyecto remoto.
+El esquema ejecutable inicial está en [`20261005212317_initial_schema.sql`](../supabase/migrations/20261005212317_initial_schema.sql); [`schema.sql`](schema.sql) queda como referencia histórica del diseño. Este documento resume sus entidades y las ampliaciones necesarias. El baseline todavía no incorpora RLS detallado, rival virtual, trazabilidad ni todas las invariantes de negocio; no representa un backend completo.
+
+El proyecto remoto actual está reservado a **desarrollo**. Se verificó inicialmente vacío en Postgres 17.6 y el baseline ya está aplicado mediante migraciones, con historial sincronizado. Pasan 15 comprobaciones pgTAP remotas (repetidas con fixtures/permisos revertidos) y lint sin Docker. F1.3 está cerrada; el procedimiento está en [`supabase/README.md`](../supabase/README.md). Los siguientes cambios son nuevas migraciones, nunca una edición del baseline aplicado. Producción será un proyecto separado antes de incorporar datos reales.
 
 ## Entidades principales
 
@@ -21,7 +23,7 @@ El esquema inicial está en [`schema.sql`](schema.sql). Este documento resume su
 - **`standings` (clasificación) no es una tabla física**: se calcula mediante una vista o función SQL a partir de `duels`, para no duplicar datos ni arriesgar inconsistencias. Debe soportar el desempate en cascada descrito en `02-business-rules.md`.
 - **Soft delete en `profiles` y `teams`/`competitions`** (campo `activo`): nunca se borra físicamente un registro que ya tenga historial asociado (predicciones, duelos, partidos jugados).
 - **Inmutabilidad de `predictions`**: se garantiza a nivel de RLS (políticas de Supabase), no con una restricción de base de datos, porque el admin sí debe poder modificarlas.
-- **RLS**: el script activa RLS en todas las tablas; las políticas por rol y operación todavía no están incluidas. La ejecución del script en el remoto no está verificada desde el repositorio.
+- **RLS**: habilitado en las nueve tablas del desarrollo remoto. Las políticas por rol y operación todavía no están incluidas. Las pruebas SQL comprueban que `anon` y `authenticated` no leen las tablas antes de añadir políticas, incluso con grants temporales que se revierten al terminar.
 - **Campos protegidos**: permitir editar el perfil propio no debe permitir cambiar `role` o `activo`; tampoco se permite al player escribir `acierto`, puntos o resultados calculados. RLS debe complementarse con permisos de columna o funciones de servidor controladas.
 - **Envío completo**: las filas de `predictions` representan un envío de 5 partidos que debe guardarse en una sola transacción. La restricción única actual no garantiza este requisito.
 - **Fallos por ausencia**: no hace falta crear cinco predicciones falsas; se derivan 0 aciertos y 5 fallos de la participación real en una jornada resuelta. Los lados virtuales no acumulan fallos ni estadísticas, incluido un duelo virtual contra virtual.

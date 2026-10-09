@@ -29,14 +29,23 @@ Fuentes consultadas:
 | Requisitos y reglas principales | Fase 0 cerrada; decisiones confirmadas y ejemplos de aceptación documentados |
 | Angular 21 standalone, routing, TypeScript estricto y Tailwind 4 | Base configurada |
 | Cliente Supabase y configuración pública en runtime | Preparados; no equivalen a un flujo de auth implementado |
-| Proyecto Supabase | Creado según información del desarrollador; esquema remoto por verificar |
-| Esquema SQL | Diseño inicial en `schema.sql`; sin migraciones versionadas en el repositorio |
-| RLS | Activación incluida en el script; faltan políticas y comprobación del remoto |
+| Proyecto Supabase | Proyecto actual autorizado como desarrollo remoto (Postgres 17.6); baseline aplicado e historial sincronizado |
+| Esquema SQL | Baseline versionado en `supabase/migrations/`; 15 pruebas pgTAP remotas repetidas y lint correctos; Docker no obligatorio |
+| RLS | Habilitado en las nueve tablas; denegación inicial validada con roles anon/authenticated; políticas funcionales pendientes |
 | PrimeNG | Elegido; pendiente de instalar |
 | Pantallas y rutas funcionales | Pendientes; solo existe la portada inicial |
 | Resend | Endpoint base en `api/send-email.mjs`; no protegido ni integrado con jornadas |
 | Vercel | Configuración de build y fallback SPA; despliegue funcional completo por validar |
-| Pruebas | Pruebas básicas del componente raíz; faltan cobertura funcional y de seguridad |
+| Pruebas | 2 Angular, 9 del runner y 15 SQL del baseline correctas; pendiente ampliar cobertura de funcionalidades y permisos |
+
+## Entorno de ejecución acordado
+
+- **Frontend local + Supabase remoto de desarrollo**; la réplica local con Docker es opcional, no un bloqueo del roadmap.
+- El proyecto actual está destinado a desarrollo. `supabase/development.json` y el enlace del CLI deben coincidir antes de desplegar/probar/hacer lint.
+- Validación SQL sin Docker mediante `pnpm db:test`: fixtures repetidos dentro de una transacción con rollback, resultados TAP completos y comprobación del estado posterior. No se renuncia a probar las reglas o permisos.
+- No ejecutar resets remotos ni pruebas con fixtures contra producción. Crear un proyecto de producción separado antes del lanzamiento, con variables Auth/Storage/Vercel propias.
+- Las migraciones aplicadas son inmutables. Consultar historial/inventario y plan antes de cada despliegue; no usar cambios manuales del Dashboard como sustituto de migraciones.
+- Procedimiento y evidencia: [supabase/README.md](../supabase/README.md).
 
 ## Orden y dependencias
 
@@ -85,8 +94,8 @@ El motor de puntuación y la clasificación ya tienen reglas definidas, pero se 
 ### 1A. Esquema y entorno Supabase
 
 - [x] **F1.1 — Diseñar las entidades iniciales.** Perfiles, invitaciones, equipos, competiciones, temporadas, jornadas, partidos, predicciones y duelos en `03-data-model.md` y `schema.sql`.
-- [x] **F1.2 — Preparar infraestructura local.** Angular, Tailwind, singleton Supabase, generación de `public/env.js` y configuración de Vercel disponibles. Proyecto Supabase creado según el desarrollador.
-- [ ] **F1.3 — Verificar y versionar el esquema.** Revisar qué existe realmente en Supabase remoto antes de aplicar SQL. Incorporar un baseline y los cambios en `supabase/migrations/`; evitar ejecutar a ciegas un script con tipos/tablas ya existentes. Documentar cómo levantar o actualizar el entorno y añadir datos de prueba reproducibles sin secretos ni usuarios reales.
+- [x] **F1.2 — Preparar infraestructura de desarrollo.** Angular/Tailwind local, singleton Supabase, generación de `public/env.js` y configuración Vercel disponibles. Proyecto Supabase remoto enlazado; Docker opcional por restricciones del equipo corporativo.
+- [x] **F1.3 — Verificar y versionar el esquema.** Cerrada: remoto inspeccionado inicialmente vacío en Postgres 17.6; baseline `20261005212317_initial_schema.sql` aplicado mediante migraciones e historial local/remoto coincidente. CLI 2.119.0 fijado; inventario, fixtures reproducibles y runner sin Docker con guardia de proyecto de desarrollo. 15 comprobaciones pgTAP correctas en dos ejecuciones, seed cargado dos veces por transacción sin duplicados, datos/grants/pgTAP revertidos; lint sin errores y segundo despliegue no-op. Pasan 9 tests del runner, 2 Angular y build. Esta validación remota reemplaza el reset local, sin ejecutar resets remotos. Evidencia/procedimiento en [supabase/README.md](../supabase/README.md).
 - [ ] **F1.4 — Reforzar integridad y preservación del histórico.** Revisar `ON DELETE CASCADE`, rangos de aciertos/puntos, número positivo de jornada y transiciones válidas. Planificar las operaciones transaccionales que garantizarán cinco partidos y participación única; implementar sus detalles en F3/F4. No permitir borrados físicos ordinarios de registros con histórico.
 - [ ] **F1.5 — Diseñar la persistencia del rival virtual.** Elegir una representación explícita en duelos que admita un lado virtual y preserve la identidad sustituida. No crear una cuenta ficticia en Auth ni depender del `activo` actual. Preparar las restricciones y metadatos necesarios para el comportamiento que se entregue en F2/F3/F5.
 
@@ -96,7 +105,7 @@ El motor de puntuación y la clasificación ya tienen reglas definidas, pero se 
 - [ ] **F1.7 — Preparar el primer admin.** Definir un procedimiento manual/servidor reproducible para asignar el rol inicial fuera del registro normal. Nunca publicar credenciales o claves privilegiadas.
 - [ ] **F1.8 — Implementar RLS y permisos de funciones.** Matriz por tabla para `anon`, player activo, admin activo y usuario desactivado; operaciones SELECT/INSERT/UPDATE/DELETE según requisitos. Proteger columnas privilegiadas con permisos de columna o RPC controladas, además de RLS. Evitar políticas recursivas al consultar el rol y revisar `SECURITY DEFINER`, `search_path` y grants.
 - [ ] **F1.9 — Implementar estado de sesión y rutas.** Servicio de auth con signals, restauración de sesión, cambios de sesión, login/logout y guards de usuario/admin. Mostrar carga inicial y redirigir correctamente; los guards no sustituyen a los permisos del backend.
-- [ ] **F1.10 — Crear registro, login y recuperación de contraseña.** Formularios con validaciones, errores comprensibles y prevención de envíos duplicados. Configurar callback y redirects de Auth para `localhost:4200` y Vercel; comprobar el flujo de enlace caducado o inválido.
+- [ ] **F1.10 — Crear registro, login y recuperación de contraseña.** Formularios con validaciones, errores comprensibles y prevención de envíos duplicados. Configurar callback y redirects en Auth del proyecto remoto para `localhost:4200` y Vercel; `config.toml` solo configura el stack local opcional. Comprobar el flujo de enlace caducado o inválido.
 - [ ] **F1.11 — Crear edición del perfil propio.** Username, avatar y correo; usar Auth para cambiar email y mantener `profiles.email` sincronizado con el cambio efectivo, no con un valor arbitrario del cliente. Rol de solo lectura y sin botón de baja para players.
 - [ ] **F1.12 — Configurar Storage y sus permisos.** Escudos públicos y estrategia de avatares documentada; escrituras de escudos solo admin y de avatar solo propietario/admin según el flujo. Validar tipo/tamaño, rutas de objetos y borrado/sustitución de imágenes sin romper referencias.
 
@@ -280,9 +289,9 @@ Los escenarios de jugadores reales se prueban también intercambiando A/B. Para 
 
 - [ ] **F8.1 — Recorrer el flujo completo.** Admin crea catálogos/temporada/jornada; usuarios se registran, pronostican, reciben recordatorio, consultan resultados/clasificación; admin cierra y abre nueva temporada. Incluir corrección posterior y rival virtual.
 - [ ] **F8.2 — Revisar responsive y accesibilidad.** Móvil como uso principal y PC para mantenimiento: navegación, tablas, formularios, touch targets, foco, teclado, etiquetas, contraste, estados deshabilitados y mensajes de error. No depender solo del color para 1/X/2 o aciertos.
-- [ ] **F8.3 — Ejecutar pruebas y build.** `pnpm test --watch=false` y `pnpm run build`; comprobar el build Vercel con variables públicas de prueba (`pnpm run build:vercel`). Añadir smoke tests de los flujos críticos y pruebas SQL/RLS reproducibles. CI mínima para build/pruebas si se habilita; no marcar completo con fallos pendientes.
+- [ ] **F8.3 — Ejecutar pruebas y build.** `pnpm test --watch=false`, `pnpm run test:db-runner`, `pnpm db:test`, `pnpm run db:lint:dev` y `pnpm run build`; comprobar el build Vercel con variables públicas de prueba (`pnpm run build:vercel`). Ampliar smoke tests y pruebas SQL/RLS sobre desarrollo remoto, con rollback y sin fixtures en producción. CI mínima si se habilita; no marcar completo con fallos pendientes.
 - [ ] **F8.4 — Auditar seguridad práctica.** Invitación imposible de saltar, permisos de columnas/RLS/RPC/Storage, usuarios desactivados, cierre concurrente, endpoint email protegido y ausencia de claves privadas o correos innecesarios en cliente/logs. Revisar configuración local y remota, no solo código.
-- [ ] **F8.5 — Validar despliegue Vercel.** Variables por entorno, generación de `env.js`, recarga en rutas profundas, callback de Auth y ruta `/api/` fuera del fallback SPA. Probar Preview antes de Production; comprobar budgets y evitar dependencias UI innecesarias.
+- [ ] **F8.5 — Separar producción y validar despliegue Vercel.** Crear un proyecto Supabase de producción distinto antes de incorporar datos reales y aplicar solo migraciones revisadas, sin seed de pruebas. Preview/desarrollo apuntan a Supabase de desarrollo; Vercel Production a producción, con Auth/Storage/redirects propios. Mantener la guardia de tests apuntando a desarrollo. Verificar `env.js`, rutas profundas, callbacks y `/api/` fuera del fallback SPA; probar Preview antes de Production y revisar budgets.
 - [ ] **F8.6 — Documentar operación y recuperación.** README con instalación, migraciones, primer admin, dominios/redirects, Storage y Resend. Procedimiento sencillo de respaldo/exportación y corrección de datos acorde al plan Supabase; confirmar las capacidades reales del plan Free, sin prometer backups no disponibles.
 - [ ] **F8.7 — Hacer una prueba con amigos.** Jornada de prueba sin datos de producción, verificar que entienden envío definitivo, horarios manuales y puntuación. Resolver incidencias críticas antes de abrir la temporada real.
 
@@ -305,4 +314,4 @@ Una tarea implementada se marca `[x]` solo cuando:
 
 ## Próxima acción recomendada
 
-Empezar por **F1.3: verificar el estado real de Supabase y crear el baseline de migraciones**. Después resolver registro/perfiles/RLS y montar PrimeNG/auth antes de conectar los CRUDs. No desplegar el endpoint de correo sin protegerlo ni dar por finalizada la fase 1 por tener únicamente las tablas diseñadas.
+Continuar con **F1.4: reforzar integridad y preservación del histórico**, mediante una nueva migración sobre el baseline ya aplicado al desarrollo remoto. F1.3 está cerrada con pruebas/lint sin Docker. Después abordar registro/perfiles/RLS y montar PrimeNG/auth antes de conectar los CRUDs. No desplegar el endpoint de correo sin protegerlo ni dar por finalizada la fase 1 por tener únicamente las tablas diseñadas.
