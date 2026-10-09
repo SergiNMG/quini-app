@@ -127,4 +127,4 @@ RLS filtra filas, no oculta por sí solo columnas privadas. La fase 1 debe dise�
 
 ## Cierre de fase 0
 
-F0.4–F0.7 quedan confirmadas y documentadas. Estos escenarios son criterios de aceptación de las fases de implementación, no funcionalidades implementadas. El siguiente paso del roadmap es **F1.3: verificar el estado remoto de Supabase y versionar el esquema**.
+F0.4–F0.7 quedan confirmadas y documentadas. Estos escenarios son criterios de aceptación de las fases de implementación, no funcionalidades implementadas. Los casos se implementan y prueban en las fases posteriores; el estado actualizado y la próxima tarea se consultan en el [roadmap](05-roadmap.md).

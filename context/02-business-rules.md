@@ -45,6 +45,7 @@ Aciertos, fallos, jornadas ganadas y enfrentamientos directos deben poder consul
 - Los duelos históricos ya resueltos no se reinterpretan por cambiar el estado actual del perfil.
 - En los duelos futuros afectados por una baja, el rival pasa a ser **`jugador_undefined`**, para mantener los emparejamientos aunque haya un número impar de participantes reales.
 - `jugador_undefined` es un rival virtual, no una cuenta de Auth ni un usuario que pueda registrarse. Nunca pronostica, siempre tiene 0 aciertos y nunca suma puntos ni estadísticas de clasificación.
+- En un duelo publicado, la app conserva una plaza virtual separada de la identidad del perfil desactivado que fue sustituido; reactivar ese perfil no convierte duelos existentes a jugador real. El proyecto no expone un ID ficticio de Auth para `jugador_undefined`.
 - El rival real debe enviar los mismos 5 pronósticos que en cualquier otra jornada.
 
 ### Puntuación contra `jugador_undefined`
