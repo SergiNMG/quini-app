@@ -12,7 +12,8 @@ El proyecto actual se utiliza exclusivamente como **desarrollo**. Antes de incor
 
 - `migrations/`: esquema ejecutable versionado. Una migración aplicada no se modifica; los cambios posteriores son migraciones nuevas.
 - `seed.sql`: catálogos ficticios, sin usuarios ni secretos. El runner remoto los inserta dos veces dentro de una transacción que se revierte; no los despliega como datos persistentes.
-- `tests/initial_schema.test.sql`: 15 comprobaciones pgTAP del baseline, con `begin`/`rollback`.
+- `tests/*.test.sql`: suites pgTAP con `begin`/`rollback`; 15 comprobaciones del baseline y 62 de integridad/histórico (77 en total).
+- [`integrity.md`](integrity.md): garantías de F1.4 y plan de operaciones transaccionales para F3/F4/F5.
 - `test-support/baseline-state.sql`: conteos y privilegios comparados antes/después de las pruebas, sin exportar registros personales.
 - `inspect-schema.sql`: inventario remoto de solo lectura.
 - `../scripts/supabase-development.mjs`: runner sin Docker, validación del proyecto de desarrollo y resultados TAP.
@@ -61,9 +62,9 @@ pnpm run test:db-runner
 
 ### Seguridad y alcance de las pruebas
 
-El runner crea un archivo temporal fuera del repositorio, introduce `seed.sql` **dos veces** en la suite y ejecuta todo en una única transacción. Usa timeouts, habilita pgTAP dentro de esa transacción y devuelve el conjunto de resultados TAP antes del `rollback`. La API devuelve el último SELECT, por lo que la suite recoge todas las comprobaciones en una tabla temporal de resultados.
+El runner descubre y ejecuta en orden todas las suites `tests/*.test.sql`. Para cada una crea un archivo temporal fuera del repositorio, introduce `seed.sql` **dos veces** y ejecuta la suite en una única transacción. Usa timeouts, habilita pgTAP dentro de esa transacción y devuelve el conjunto de resultados TAP antes del `rollback`. La API devuelve el último SELECT, por lo que la suite recoge todas las comprobaciones en una tabla temporal de resultados.
 
-La suite comprueba:
+La suite del baseline comprueba:
 
 - Nueve tablas, cinco enums, siete índices y trigger de `updated_at`.
 - RLS habilitado en las nueve tablas.
@@ -72,13 +73,15 @@ La suite comprueba:
 - Equipos distintos, número de jornada único por temporada y FK de equipo.
 - Denegación de lectura por RLS para `anon` y `authenticated` antes de incorporar políticas.
 
+La suite de F1.4 añade 62 casos de borrados/reasignaciones, FK RESTRICT, rangos y estados, soft delete y correcciones en histórico. Crea identidades Auth/perfiles/invitaciones **ficticios solo dentro de su transacción**, sin passwords ni cuentas utilizables, para ejercitar las relaciones; no los confunde con datos de seed ni los deja persistidos.
+
 Las escrituras de fixtures, creación temporal de pgTAP y grants de prueba se revierten. Se comparan conteos de las nueve tablas y de `auth.users`, estado de pgTAP y los privilegios afectados antes/después. No se espera que la base esté vacía para comprobar que el seed no crea cuentas. Evitar actividad concurrente al ejecutar la suite: una escritura de otro proceso podría hacer fallar esa comparación.
 
 El runner **no considera suficiente el exit code del SQL**: exige un plan completo, resultados `ok` numerados y ausencia de fallos, SKIP/TODO o bailout. Sus nueve pruebas unitarias cubren el parser y el bloqueo de un proyecto no autorizado.
 
 No ejecutar las pruebas contra producción, no usar `--include-seed` en un push remoto y **nunca ejecutar `db reset --linked` o `db reset --db-url`**. Tampoco se crean credenciales de prueba. Registro/perfiles y primer admin corresponden a F1.6/F1.7.
 
-Estas pruebas son del baseline: cuando F1.8 introduzca políticas, habrá que actualizar el escenario de lectura inicial y añadir casos por rol. No validan todavía las reglas de puntuación, cinco partidos atómicos o la privacidad final del grupo.
+Estas pruebas cubren baseline e integridad, no la autorización funcional: cuando F1.6 añada aprovisionamiento de perfiles y F1.8 políticas, adaptar las fixtures/casos a esos flujos y añadir pruebas por rol. No validan todavía las reglas de puntuación, cinco partidos atómicos o la privacidad final del grupo.
 
 ## Evidencia de cierre de F1.3
 
@@ -98,7 +101,15 @@ Validación realizada en el proyecto de desarrollo autorizado:
 
 No se ha hecho ningún reset remoto. Esta validación reemplaza el requisito anterior de reconstrucción local con Docker: **F1.3 está cerrada**. No afirma haber reconstruido una base vacía local o haber probado un rollback del despliegue; son comprobaciones diferentes y no obligatorias en el flujo remoto acordado.
 
-El baseline contiene las tablas/enums del diseño inicial con tipos calificados en `public`, índices, función/trigger y RLS. Las políticas, reglas transaccionales completas, rival virtual y protección del histórico siguen pendientes en F1.4 y posteriores. No abrir la aplicación a usuarios reales hasta completar esos permisos y flujos.
+El baseline contiene las tablas/enums del diseño inicial con tipos calificados en `public`, índices, función/trigger y RLS. La protección del histórico se ha completado en la siguiente migración de F1.4; políticas, operaciones transaccionales completas y rival virtual siguen pendientes. No abrir la aplicación a usuarios reales hasta completar esos permisos y flujos.
+
+## Evidencia de cierre de F1.4
+
+`20261009133127_integrity_and_history.sql` aplicada a desarrollo con 12 FK RESTRICT, rangos/coherencia de valores y fechas, guardias de borrado/identidad/estado y bloqueos de padres. Ningún dato real se reescribió ni se modificó el baseline.
+
+Pasan **77/77 pruebas SQL en dos suites**, repetidas en dos ejecuciones; lint sin errores, 9/9 pruebas del runner, 2/2 Angular y build correctos. Las dos migraciones coinciden con el historial remoto y el dry-run final no tiene pendientes. No se ha ejecutado reset remoto ni dejado fixtures/usuarios ficticios persistentes.
+
+Detalles y límites (incluidas atomicidad y concurrencia aún por implementar): [F1.4 — Integridad y preservación](integrity.md).
 
 ## Añadir la siguiente migración
 

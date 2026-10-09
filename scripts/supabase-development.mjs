@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { readFileSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { readFileSync, readdirSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -45,8 +45,17 @@ function runCli(args, capture = false) {
   });
   if (result.error) throw result.error;
   if (result.status !== 0) {
-    if (capture) process.stderr.write(result.stderr ?? '');
-    throw new Error(`Supabase CLI terminó con código ${result.status}.`);
+    let detail = '';
+    if (capture) {
+      process.stderr.write(result.stderr ?? '');
+      try {
+        const failure = JSON.parse(result.stdout);
+        if (typeof failure.error?.message === 'string') detail = ` ${failure.error.message}`;
+      } catch {
+        // Do not dump raw stdout: retain only structured CLI error messages.
+      }
+    }
+    throw new Error(`Supabase CLI terminó con código ${result.status}.${detail}`);
   }
   if (!capture) return;
   const response = JSON.parse(result.stdout);
@@ -84,28 +93,39 @@ function testDatabase() {
   const temporary = mkdtempSync(join(tmpdir(), 'quini-db-test-'));
   try {
     const seed = readFileSync(join(root, 'supabase/seed.sql'), 'utf8');
-    const test = readFileSync(join(root, 'supabase/tests/initial_schema.test.sql'), 'utf8');
-    const marker = '-- @fixtures';
-    if (test.split(marker).length !== 2 || !/^begin;/m.test(test) || !/rollback;\s*$/.test(test)) {
-      throw new Error(
-        'La suite debe contener una transacción con rollback y un marcador de fixtures.',
-      );
+    const directory = join(root, 'supabase/tests');
+    const suites = readdirSync(directory)
+      .filter((name) => name.endsWith('.test.sql'))
+      .sort();
+    if (!suites.length) throw new Error('No hay suites SQL para ejecutar.');
+    let total = 0;
+    for (const suite of suites) {
+      const test = readFileSync(join(directory, suite), 'utf8');
+      const marker = '-- @fixtures';
+      if (
+        test.split(marker).length !== 2 ||
+        !/^begin;/m.test(test) ||
+        !/rollback;\s*$/.test(test)
+      ) {
+        throw new Error(
+          `${suite}: se requiere una transacción con rollback y un marcador de fixtures.`,
+        );
+      }
+      const sqlPath = join(temporary, suite);
+      // Seed twice inside each rollback-only transaction to test its idempotency.
+      writeFileSync(sqlPath, test.replace(marker, `${seed}\n${seed}`));
+      const before = queryFile(join(root, 'supabase/test-support/baseline-state.sql'));
+      const rows = queryFile(sqlPath);
+      const after = queryFile(join(root, 'supabase/test-support/baseline-state.sql'));
+      if (JSON.stringify(before) !== JSON.stringify(after)) {
+        throw new Error(`${suite}: cambió el estado; revisar rollback o actividad concurrente.`);
+      }
+      const results = validateTap(rows);
+      console.log(`\n${suite}\n${results.join('\n')}`);
+      total += results.length;
     }
-    const sqlPath = join(temporary, 'initial_schema.test.sql');
-    // Seed twice inside the same rollback-only transaction to test its idempotency.
-    writeFileSync(sqlPath, test.replace(marker, `${seed}\n${seed}`));
-    const before = queryFile(join(root, 'supabase/test-support/baseline-state.sql'));
-    const rows = queryFile(sqlPath);
-    const after = queryFile(join(root, 'supabase/test-support/baseline-state.sql'));
-    if (JSON.stringify(before) !== JSON.stringify(after)) {
-      throw new Error(
-        'El estado de datos/permisos cambió durante la prueba; revisar rollback o actividad concurrente.',
-      );
-    }
-    const results = validateTap(rows);
-    console.log(results.join('\n'));
     console.log(
-      `${results.length} comprobaciones correctas; datos, privilegios y extensión pgTAP sin cambios persistentes.`,
+      `${total} comprobaciones correctas en ${suites.length} suites; datos/permisos/pgTAP sin cambios persistentes.`,
     );
   } finally {
     rmSync(temporary, { recursive: true, force: true });

@@ -70,12 +70,12 @@ pnpm exec supabase migration list --linked
 pnpm db:inspect:remote
 pnpm db:plan:remote       # dry-run; no aplica SQL
 pnpm run db:deploy:dev    # aplica migraciones SOLO al desarrollo autorizado
-pnpm db:test             # 15 comprobaciones pgTAP remotas con rollback, sin Docker
+pnpm db:test             # 77 comprobaciones pgTAP en 2 suites, con rollback y sin Docker
 pnpm run db:lint:dev
 pnpm run test:db-runner   # pruebas locales del parser y guardia de entorno
 ```
 
-Los comandos de despliegue/pruebas/lint verifican que el proyecto enlazado coincide con `supabase/development.json`. El identificador del proyecto no es una credencial. El baseline está **aplicado y validado en desarrollo**; F1.3 está cerrada, pero las políticas RLS y los flujos funcionales siguen pendientes.
+Los comandos de despliegue/pruebas/lint verifican que el proyecto enlazado coincide con `supabase/development.json`. El identificador del proyecto no es una credencial. Baseline y migración de integridad están **aplicados y validados en desarrollo**; F1.3/F1.4 están cerradas. Ver [garantías del histórico y límites transaccionales](supabase/integrity.md). Las políticas RLS y los flujos funcionales siguen pendientes.
 
 Los fixtures se insertan únicamente dentro de la transacción de prueba y se revierten; no quedan usuarios ni catálogos ficticios persistentes. No ejecutar resets remotos ni subir seeds a producción. Antes del lanzamiento se creará un proyecto de producción separado.
 
