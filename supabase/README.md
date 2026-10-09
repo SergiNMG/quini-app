@@ -12,8 +12,9 @@ El proyecto actual se utiliza exclusivamente como **desarrollo**. Antes de incor
 
 - `migrations/`: esquema ejecutable versionado. Una migración aplicada no se modifica; los cambios posteriores son migraciones nuevas.
 - `seed.sql`: catálogos ficticios, sin usuarios ni secretos. El runner remoto los inserta dos veces dentro de una transacción que se revierte; no los despliega como datos persistentes.
-- `tests/*.test.sql`: suites pgTAP con `begin`/`rollback`; 15 comprobaciones del baseline y 62 de integridad/histórico (77 en total).
-- [`integrity.md`](integrity.md): garantías de F1.4 y plan de operaciones transaccionales para F3/F4/F5.
+- `tests/*.test.sql`: suites pgTAP con `begin`/`rollback`; 15 comprobaciones de baseline, 62 de integridad/histórico y 27 de jugador virtual (104 en total).
+- [`integrity.md`](integrity.md): garantías de F1.4 y plan transaccional para F3/F4/F5.
+- [`virtual-participants.md`](virtual-participants.md): modelo persistente F1.5, permisos de lectura pendientes y reglas que se aplicarán en F5/F6.
 - `test-support/baseline-state.sql`: conteos y privilegios comparados antes/después de las pruebas, sin exportar registros personales.
 - `inspect-schema.sql`: inventario remoto de solo lectura.
 - `../scripts/supabase-development.mjs`: runner sin Docker, validación del proyecto de desarrollo y resultados TAP.
@@ -73,7 +74,9 @@ La suite del baseline comprueba:
 - Equipos distintos, número de jornada único por temporada y FK de equipo.
 - Denegación de lectura por RLS para `anon` y `authenticated` antes de incorporar políticas.
 
-La suite de F1.4 añade 62 casos de borrados/reasignaciones, FK RESTRICT, rangos y estados, soft delete y correcciones en histórico. Crea identidades Auth/perfiles/invitaciones **ficticios solo dentro de su transacción**, sin passwords ni cuentas utilizables, para ejercitar las relaciones; no los confunde con datos de seed ni los deja persistidos.
+La suite de F1.4 añade 62 casos de borrados/reasignaciones, FK RESTRICT, rangos y estados, soft delete y correcciones en histórico. Crea identidades Auth/perfiles/invitaciones ficticias solo dentro de su transacción, sin passwords ni cuentas utilizables, para ejercitar las relaciones.
+
+La suite de F1.5 cubre ambos lados virtuales, virtual-vs-virtual, provenance FK, perfiles activos/inactivos, puntos/aciertos siempre cero del virtual, reactivación sin reescribir duelos publicados, e invariancia del duelo real anterior. Todos los perfiles ficticios y pruebas se revierten.
 
 Las escrituras de fixtures, creación temporal de pgTAP y grants de prueba se revierten. Se comparan conteos de las nueve tablas y de `auth.users`, estado de pgTAP y los privilegios afectados antes/después. No se espera que la base esté vacía para comprobar que el seed no crea cuentas. Evitar actividad concurrente al ejecutar la suite: una escritura de otro proceso podría hacer fallar esa comparación.
 
@@ -101,15 +104,15 @@ Validación realizada en el proyecto de desarrollo autorizado:
 
 No se ha hecho ningún reset remoto. Esta validación reemplaza el requisito anterior de reconstrucción local con Docker: **F1.3 está cerrada**. No afirma haber reconstruido una base vacía local o haber probado un rollback del despliegue; son comprobaciones diferentes y no obligatorias en el flujo remoto acordado.
 
-El baseline contiene las tablas/enums del diseño inicial con tipos calificados en `public`, índices, función/trigger y RLS. La protección del histórico se ha completado en la siguiente migración de F1.4; políticas, operaciones transaccionales completas y rival virtual siguen pendientes. No abrir la aplicación a usuarios reales hasta completar esos permisos y flujos.
+El baseline contiene las tablas/enums iniciales con tipos calificados en `public`, índices, función/trigger y RLS. La migración F1.4 protege el histórico y F1.5 persiste los lados virtuales; políticas y operaciones transaccionales completas siguen pendientes. No abrir la aplicación a usuarios reales hasta completar esos permisos y flujos.
 
-## Evidencia de cierre de F1.4
+## Evidencia de cierre de F1.4/F1.5
 
-`20261009133127_integrity_and_history.sql` aplicada a desarrollo con 12 FK RESTRICT, rangos/coherencia de valores y fechas, guardias de borrado/identidad/estado y bloqueos de padres. Ningún dato real se reescribió ni se modificó el baseline.
+`20261009133127_integrity_and_history.sql` protege borrados/reasignaciones y añade integridad; `20261009140144_virtual_duel_participants.sql` permite lados virtuales con procedencia conservada e invariantes. Ambas aplicadas a desarrollo sin modificar migraciones anteriores.
 
-Pasan **77/77 pruebas SQL en dos suites**, repetidas en dos ejecuciones; lint sin errores, 9/9 pruebas del runner, 2/2 Angular y build correctos. Las dos migraciones coinciden con el historial remoto y el dry-run final no tiene pendientes. No se ha ejecutado reset remoto ni dejado fixtures/usuarios ficticios persistentes.
+Pasan **104/104 pruebas SQL en tres suites**, repetidas en ejecuciones completas; lint sin errores, 9/9 pruebas del runner, 2/2 Angular y build correctos. Las cuatro migraciones coinciden con el historial remoto y el dry-run final no tiene pendientes. No se ha ejecutado reset remoto ni dejado fixtures/usuarios ficticios persistentes.
 
-Detalles y límites (incluidas atomicidad y concurrencia aún por implementar): [F1.4 — Integridad y preservación](integrity.md).
+Detalles: [integridad y preservación (F1.4)](integrity.md), [persistencia del rival virtual (F1.5)](virtual-participants.md). Atomicidad, seguridad de lectura y cálculo concurrente siguen en F3/F4/F5/F1.8.
 
 ## Añadir la siguiente migración
 

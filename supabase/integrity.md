@@ -32,7 +32,7 @@ No se puede cambiar:
 | Duelos | `matchday_id`, `player_a_id`, `player_b_id` |
 | Invitación consumida | `code`, `usado`, `usado_por` |
 
-Esto evita trasladar un pronóstico a otro jugador, cambiar retrospectivamente un rival o mover una jornada a otra temporada. La representación del virtual en F1.5 deberá conservar estas identidades en jornadas existentes; las bajas solo afectan a jornadas creadas después.
+Esto evita trasladar un pronóstico a otro jugador, cambiar retrospectivamente un rival o mover una jornada a otra temporada. F1.5 ya representa un lado virtual como `player_*_id IS NULL` y conserva la persona sustituida en `player_*_replaced_id`; se asigna al crear un duelo nuevo, nunca reescribe un duelo publicado. Reactivar luego a ese perfil no convierte el lado virtual en real.
 
 Los nombres, avatares y estado activo del catálogo/perfil pueden mantenerse sin cambiar sus IDs. Cambiar equipos o competición de un partido exige temporada activa, jornada ABIERTA y ausencia de predicciones sobre ese partido; al comenzar la jornada o existir un pronóstico, se bloquea. Este límite de base de datos no introduce un flujo de edición de jornada: la UI y las decisiones de F3.5 siguen pendientes.
 
@@ -48,7 +48,7 @@ Los nombres, avatares y estado activo del catálogo/perfil pueden mantenerse sin
   - `EMPATE`: 1/1; también se reservan 1/0 y 0/1 para el futuro rival virtual.
   - Resultado nulo con ambos aciertos/puntos informados y 0/0: duelo resuelto no puntuable, distinto de uno pendiente.
 
-No basta comprobar rangos: la restricción también rechaza cálculos parciales y no deja que `resultado = NULL` eluda la coherencia por la semántica de los CHECK de PostgreSQL. Las formas asimétricas reservadas no significan que hoy se permita un rival virtual o se calcule correctamente un duelo real: la identificación del virtual es F1.5 y el motor que decide qué forma corresponde es F5.
+No basta comprobar rangos: la restricción también rechaza cálculos parciales y no deja que `resultado = NULL` eluda la coherencia por la semántica de los CHECK de PostgreSQL. F1.5 concreta qué lado es virtual y restringe sus puntos/aciertos a cero; el motor F5 decide si corresponde 3/0, 1/0, 0/0 y cuándo se finaliza.
 
 ## Estados y actividad nueva
 
@@ -85,7 +85,9 @@ Esto evita validar un padre como abierto/activo mientras otra transacción lo ca
 
 Resolver/corregir con bloqueo de jornada/duelos y sobrescritura atómica de derivados, sin sumar puntos otra vez. Comprobar los cinco resultados al finalizar, jornadas pendientes al cerrar temporada y conservar la excepción administrativa sobre pronósticos existentes. La clasificación solo cuenta jornadas resueltas.
 
-Los RPC deben adoptar un orden de bloqueos consistente y tratar reintentos por deadlock/serialización. No añadir CHECK con consultas a otras tablas ni triggers ingenuos de `count(*) = 5`: no resuelven por sí solos la atomicidad o los envíos concurrentes. Si se opta por restricciones diferidas o una representación normalizada de participación, añadirla como una migración nueva y probar commits reales/concurrencia en su fase.
+La persistencia virtual está en `20261009140144_virtual_duel_participants.sql`: los dos `player_*_id` son nullables y, por lado, exactamente uno entre jugador real y perfil sustituido es no nulo. Los reemplazos tienen FK RESTRICT e índices. `guard_duel_participants()` verifica en INSERT real activo o reemplazo inactivo con un `SECURITY DEFINER` acotado, `search_path` vacío, nombres cualificados, perfiles bloqueados en orden UUID y sin EXECUTE para roles API. El trigger de identidad de F1.4 también hace inmutable el reemplazo. Los CHECKs garantizan que un lado virtual solo pueda tener 0 aciertos/0 puntos; el punto del empate virtual corresponde solo al lado real. Doble virtual se puede guardar y resolver 0/0 sin estadísticas. Las columnas de reemplazo deben ocultarse en vistas/RPC seguras de F1.8: no exponer `SELECT *` de duelos ni el ID privado del perfil para rotular al rival.
+
+Las RPC deben adoptar un orden de bloqueos consistente —primero jornada y luego perfiles en orden UUID, alineado con el trigger— y tratar reintentos por deadlock/serialización. No añadir CHECK con consultas a otras tablas ni triggers ingenuos de `count(*) = 5`: no resuelven por sí solos la atomicidad o los envíos concurrentes. Si se opta por restricciones diferidas o una representación normalizada de participación, añadirla como una migración nueva y probar commits reales/concurrencia en su fase.
 
 ## Referencias de PostgreSQL 17
 

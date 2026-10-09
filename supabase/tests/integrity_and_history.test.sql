@@ -33,7 +33,7 @@ insert into public.invitation_codes (id, code, usado, usado_por) values
 
 insert into pg_temp.tap_results select 1, is((select count(*)::integer from pg_constraint
   where contype = 'f' and connamespace = 'public'::regnamespace
-    and confdeltype = 'r' and confupdtype = 'r'), 12, 'All twelve FKs restrict deletion and rekeying');
+    and confdeltype = 'r' and confupdtype = 'r'), 14, 'All profile references restrict deletion and rekeying, including virtual provenance');
 
 insert into pg_temp.tap_results select 2, throws_ok($statement$delete from auth.users where id='61000000-0000-4000-8000-000000000001'$statement$, '23503', null::text, 'Auth deletion cannot cascade into profiles/history');
 
