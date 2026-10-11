@@ -70,16 +70,20 @@ pnpm exec supabase migration list --linked
 pnpm db:inspect:remote
 pnpm db:plan:remote       # dry-run; no aplica SQL
 pnpm run db:deploy:dev    # aplica migraciones SOLO al desarrollo autorizado
-pnpm db:test             # 127 comprobaciones pgTAP en 4 suites, con rollback y sin Docker
+pnpm db:test             # 140 comprobaciones pgTAP en 5 suites, con rollback y sin Docker
 pnpm run db:lint:dev
 pnpm run test:db-runner   # pruebas locales del parser y guardia de entorno
 ```
 
-Los comandos de despliegue/pruebas/lint verifican que el proyecto enlazado coincide con `supabase/development.json`. El identificador del proyecto no es una credencial. Baseline, integridad y rival virtual están **aplicados y validados en desarrollo**; F1.3–F1.5 están cerradas. Ver [garantías de integridad](supabase/integrity.md) y [persistencia del rival virtual](supabase/virtual-participants.md). Las políticas RLS y los flujos funcionales siguen pendientes.
+Los comandos de despliegue/pruebas/lint verifican que el proyecto enlazado coincide con `supabase/development.json`. El identificador del proyecto no es una credencial. Baseline, integridad y rival virtual están **aplicados y validados en desarrollo**; F1.3–F1.5 están cerradas. Ver [garantías de integridad](supabase/integrity.md), [persistencia del rival virtual](supabase/virtual-participants.md), [alta por invitación](supabase/auth-signup.md) y [bootstrap del primer admin](supabase/bootstrap-first-admin.md). Las políticas RLS y la UI de Auth siguen pendientes.
 
 Los fixtures se insertan únicamente dentro de la transacción de prueba y se revierten; no quedan usuarios ni catálogos ficticios persistentes. No ejecutar resets remotos ni subir seeds a producción. Antes del lanzamiento se creará un proyecto de producción separado.
 
+Para preparar el primer administrador, revisar el procedimiento [bootstrap-first-admin](supabase/bootstrap-first-admin.md). Es una herramienta local de una sola vez; requiere `SUPABASE_SERVICE_ROLE_KEY` en `.env.bootstrap` (ignorado por Git), correo de invitación y migración F1.7 aplicada. No hemos creado aún ningún admin real. **Nunca pongas la service_role key en el frontend, Vercel ni el repositorio.**
+
 Crear nuevos cambios con `pnpm exec supabase migration new nombre_del_cambio`, revisar el plan y seguir la guía antes de desplegar. El stack local queda opcional en los scripts `db:*:local`.
+
+El bootstrap de administrador es opcional y de un solo uso: se ejecuta **solo cuando el proyecto de desarrollo aún no tiene ningún admin**. Tras preparar SMTP/redirect en Supabase, copia `scripts/bootstrap-admin.env.example` a `.env.bootstrap`, completa los valores locales y ejecuta `pnpm run bootstrap:admin:dev`. El script rechaza URLs distintas al proyecto de desarrollo y necesita `SUPABASE_SERVICE_ROLE_KEY` en esa máquina; nunca la incluyas en Angular, Vercel o Git. No lo hemos ejecutado, por lo que no se ha creado ningún usuario/admin real.
 
 ## Correo con Resend
 

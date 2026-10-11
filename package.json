@@ -14,6 +14,7 @@
     "db:reset:local": "supabase db reset --local",
     "db:test": "node scripts/supabase-development.mjs test",
     "db:deploy:dev": "node scripts/supabase-development.mjs deploy",
+    "bootstrap:admin:dev": "node --env-file=.env.bootstrap scripts/bootstrap-first-admin.mjs",
     "db:lint:dev": "node scripts/supabase-development.mjs lint",
     "test:db-runner": "node --test scripts/supabase-development.test.mjs",
     "db:inspect:remote": "supabase db query --linked --file supabase/inspect-schema.sql",
