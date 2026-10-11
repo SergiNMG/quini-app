@@ -9,11 +9,14 @@ set local search_path = public, extensions;
 create temporary table tap_results (position integer primary key, line text);
 insert into pg_temp.tap_results select 0, plan(62);
 
-insert into auth.users (id) values ('61000000-0000-4000-8000-000000000001'), ('61000000-0000-4000-8000-000000000002'), ('61000000-0000-4000-8000-000000000003');
-insert into public.profiles (id, username, email) values
-  ('61000000-0000-4000-8000-000000000001', '__sql_integrity_a', 'integrity-a@example.invalid'),
-  ('61000000-0000-4000-8000-000000000002', '__sql_integrity_b', 'integrity-b@example.invalid'),
-  ('61000000-0000-4000-8000-000000000003', '__sql_integrity_c', 'integrity-c@example.invalid');
+insert into public.invitation_codes (id, code) values
+  ('92000000-0000-4000-8000-000000000001', 'SQL_F14_A'),
+  ('92000000-0000-4000-8000-000000000002', 'SQL_F14_B'),
+  ('92000000-0000-4000-8000-000000000003', 'SQL_F14_C');
+insert into auth.users (id, email, raw_user_meta_data) values
+  ('61000000-0000-4000-8000-000000000001', 'integrity-a@example.invalid', jsonb_build_object('username', '__sql_integrity_a', 'invitation_code', 'SQL_F14_A')),
+  ('61000000-0000-4000-8000-000000000002', 'integrity-b@example.invalid', jsonb_build_object('username', '__sql_integrity_b', 'invitation_code', 'SQL_F14_B')),
+  ('61000000-0000-4000-8000-000000000003', 'integrity-c@example.invalid', jsonb_build_object('username', '__sql_integrity_c', 'invitation_code', 'SQL_F14_C'));
 insert into public.seasons (id, nombre, fecha_inicio) values
   ('31000000-0000-4000-8000-000000000001', 'SQL integrity season', '2026-01-01'),
   ('31000000-0000-4000-8000-000000000002', 'SQL integrity other season', '2026-01-01');

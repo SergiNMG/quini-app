@@ -12,9 +12,10 @@ El proyecto actual se utiliza exclusivamente como **desarrollo**. Antes de incor
 
 - `migrations/`: esquema ejecutable versionado. Una migración aplicada no se modifica; los cambios posteriores son migraciones nuevas.
 - `seed.sql`: catálogos ficticios, sin usuarios ni secretos. El runner remoto los inserta dos veces dentro de una transacción que se revierte; no los despliega como datos persistentes.
-- `tests/*.test.sql`: suites pgTAP con `begin`/`rollback`; 15 comprobaciones de baseline, 62 de integridad/histórico y 27 de jugador virtual (104 en total).
+- `tests/*.test.sql`: suites pgTAP con `begin`/`rollback`; 15 de baseline, 62 de integridad/histórico, 27 de jugador virtual y 23 de Auth/invitaciones (127 en total).
 - [`integrity.md`](integrity.md): garantías de F1.4 y plan transaccional para F3/F4/F5.
 - [`virtual-participants.md`](virtual-participants.md): modelo persistente F1.5, permisos de lectura pendientes y reglas que se aplicarán en F5/F6.
+- [`auth-signup.md`](auth-signup.md): contrato y atomicidad del registro F1.6; metadatos permitidos, consumo del código y límites de RLS/UI.
 - `test-support/baseline-state.sql`: conteos y privilegios comparados antes/después de las pruebas, sin exportar registros personales.
 - `inspect-schema.sql`: inventario remoto de solo lectura.
 - `../scripts/supabase-development.mjs`: runner sin Docker, validación del proyecto de desarrollo y resultados TAP.
@@ -82,9 +83,9 @@ Las escrituras de fixtures, creación temporal de pgTAP y grants de prueba se re
 
 El runner **no considera suficiente el exit code del SQL**: exige un plan completo, resultados `ok` numerados y ausencia de fallos, SKIP/TODO o bailout. Sus nueve pruebas unitarias cubren el parser y el bloqueo de un proyecto no autorizado.
 
-No ejecutar las pruebas contra producción, no usar `--include-seed` en un push remoto y **nunca ejecutar `db reset --linked` o `db reset --db-url`**. Tampoco se crean credenciales de prueba. Registro/perfiles y primer admin corresponden a F1.6/F1.7.
+No ejecutar las pruebas contra producción, no usar `--include-seed` en un push remoto y **nunca ejecutar `db reset --linked` o `db reset --db-url`**. Las fixtures Auth de las suites son ficticias y se revierten. El trigger de registro F1.6 está cubierto aquí; crear/promover el primer admin es F1.7, y RLS/permisos de las tablas son F1.8.
 
-Estas pruebas cubren baseline e integridad, no la autorización funcional: cuando F1.6 añada aprovisionamiento de perfiles y F1.8 políticas, adaptar las fixtures/casos a esos flujos y añadir pruebas por rol. No validan todavía las reglas de puntuación, cinco partidos atómicos o la privacidad final del grupo.
+Estas pruebas cubren baseline, integridad, altas Auth/invitación y rival virtual, no la autorización funcional del resto de operaciones: F1.8 añadirá casos de lectura/escritura por rol y protegerá la proyección privada de perfiles e IDs de sustitución. No validan todavía reglas de puntuación ni las operaciones atómicas de cinco partidos.
 
 ## Evidencia de cierre de F1.3
 
@@ -106,11 +107,14 @@ No se ha hecho ningún reset remoto. Esta validación reemplaza el requisito ant
 
 El baseline contiene las tablas/enums iniciales con tipos calificados en `public`, índices, función/trigger y RLS. La migración F1.4 protege el histórico y F1.5 persiste los lados virtuales; políticas y operaciones transaccionales completas siguen pendientes. No abrir la aplicación a usuarios reales hasta completar esos permisos y flujos.
 
-## Evidencia de cierre de F1.4/F1.5
+## Evidencia de cierre de F1.4–F1.6
 
-`20261009133127_integrity_and_history.sql` protege borrados/reasignaciones y añade integridad; `20261009140144_virtual_duel_participants.sql` permite lados virtuales con procedencia conservada e invariantes. Ambas aplicadas a desarrollo sin modificar migraciones anteriores.
+- `20261009133127_integrity_and_history.sql` protege identidades/histórico e integra checks de valores/estados.
+- `20261009140144_virtual_duel_participants.sql` persiste lados virtuales y su procedencia.
+- `20261009140825_virtual_duel_lock_order.sql` ordena triggers padre→perfiles para evitar inversión de bloqueos.
+- `20261009143227_invited_signup_profile.sql` exige y consume invitación al insertar Auth y crea perfil atomizado; no aplica role/activo de metadata.
 
-Pasan **104/104 pruebas SQL en tres suites**, repetidas en ejecuciones completas; lint sin errores, 9/9 pruebas del runner, 2/2 Angular y build correctos. Las cuatro migraciones coinciden con el historial remoto y el dry-run final no tiene pendientes. No se ha ejecutado reset remoto ni dejado fixtures/usuarios ficticios persistentes.
+Pasan **127/127 pruebas SQL en cuatro suites** (baseline, integridad, virtual y Auth/invitaciones), repetidas en ejecuciones completas; lint sin errores, 9/9 pruebas del runner, 2/2 Angular y build correctos. Las cinco migraciones coinciden con el historial remoto y el dry-run final no tiene pendientes. No se ha ejecutado reset remoto ni dejado fixtures/usuarios ficticios persistentes.
 
 Detalles: [integridad y preservación (F1.4)](integrity.md), [persistencia del rival virtual (F1.5)](virtual-participants.md). Atomicidad, seguridad de lectura y cálculo concurrente siguen en F3/F4/F5/F1.8.
 

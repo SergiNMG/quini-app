@@ -15,7 +15,11 @@ export function validateTap(rows) {
     .filter((value) => typeof value === 'string')
     .flatMap((value) => value.split(/\r?\n/));
   const plans = lines.filter((line) => /^1\.\.\d+$/.test(line));
-  if (plans.length !== 1) throw new Error('Se esperaba exactamente un plan pgTAP.');
+  if (plans.length !== 1) {
+    throw new Error(
+      `Se esperaba exactamente un plan pgTAP; encontrados ${plans.length}. Resultados: ${lines.slice(0, 8).join(' | ')}`,
+    );
+  }
   const expected = Number(plans[0].slice(3));
   const results = lines.filter((line) => /^(?:not )?ok\b/.test(line));
   if (!expected || results.length !== expected) {

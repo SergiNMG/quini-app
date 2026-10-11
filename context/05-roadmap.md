@@ -30,13 +30,13 @@ Fuentes consultadas:
 | Angular 21 standalone, routing, TypeScript estricto y Tailwind 4 | Base configurada |
 | Cliente Supabase y configuración pública en runtime | Preparados; no equivalen a un flujo de auth implementado |
 | Proyecto Supabase | Proyecto actual autorizado como desarrollo remoto (Postgres 17.6); baseline aplicado e historial sincronizado |
-| Esquema SQL | Baseline y migraciones F1.4/F1.5 aplicados/versionados; 104 pruebas pgTAP en 3 suites repetidas y lint correctos; Docker no obligatorio |
+| Esquema SQL | Baseline y migraciones F1.4–F1.6 aplicados/versionados; 127 pruebas pgTAP en 4 suites repetidas y lint correctos; Docker no obligatorio |
 | RLS | Habilitado en las nueve tablas; denegación inicial validada con roles anon/authenticated; políticas funcionales pendientes |
 | PrimeNG | Elegido; pendiente de instalar |
 | Pantallas y rutas funcionales | Pendientes; solo existe la portada inicial |
 | Resend | Endpoint base en `api/send-email.mjs`; no protegido ni integrado con jornadas |
 | Vercel | Configuración de build y fallback SPA; despliegue funcional completo por validar |
-| Pruebas | 2 Angular, 9 del runner y 104 SQL (15 baseline + 62 integridad + 27 virtual) correctas; pendiente ampliar funcionalidades, permisos y concurrencia de RPC |
+| Pruebas | 2 Angular, 9 del runner y 127 SQL (15 baseline + 62 integridad + 27 virtual + 23 Auth) correctas; pendiente ampliar funcionalidades, permisos y concurrencia |
 
 ## Entorno de ejecución acordado
 
@@ -101,11 +101,11 @@ El motor de puntuación y la clasificación ya tienen reglas definidas, pero se 
 
 ### 1B. Registro, perfiles y autorización
 
-- [ ] **F1.6 — Implementar registro seguro por invitación.** Validar el código en servidor y consumirlo una sola vez con protección frente a registros concurrentes. Vincular perfil y cuenta Auth; impedir crear cuentas utilizables saltándose la UI y tratar errores sin dejar invitaciones consumidas o perfiles incoherentes. No aceptar `role` o `activo` enviados por el cliente.
+- [x] **F1.6 — Implementar registro seguro por invitación.** Cerrada: migración `20261009143227_invited_signup_profile.sql` crea un trigger `AFTER INSERT ON auth.users`. Valida metadata de username/código, crea el perfil con email de Auth, PLAYER y activo=true, y consume el código con UPDATE condicional en la misma transacción Auth. Código inválido/usado, username vacío o conflicto único abortan Auth/perfil/consumo; `role`/`activo`/email enviados en metadata no se aceptan como autoridad. El bloqueo de fila serializa dos consumos simultáneos. 23 casos SQL de Auth en una suite (127 casos totales en cuatro suites), repetidos y reversibles; documentación en `supabase/auth-signup.md`. La UI de registro y mensajes, confirmación email/callback son F1.10; RLS de tablas/perfiles es F1.8. El primer admin se maneja aparte en F1.7.
 - [ ] **F1.7 — Preparar el primer admin.** Definir un procedimiento manual/servidor reproducible para asignar el rol inicial fuera del registro normal. Nunca publicar credenciales o claves privilegiadas.
 - [ ] **F1.8 — Implementar RLS y permisos de funciones.** Matriz por tabla para `anon`, player activo, admin activo y usuario desactivado; operaciones SELECT/INSERT/UPDATE/DELETE según requisitos. Proteger columnas privilegiadas con permisos de columna o RPC controladas, además de RLS. Evitar políticas recursivas al consultar el rol y revisar `SECURITY DEFINER`, `search_path` y grants.
 - [ ] **F1.9 — Implementar estado de sesión y rutas.** Servicio de auth con signals, restauración de sesión, cambios de sesión, login/logout y guards de usuario/admin. Mostrar carga inicial y redirigir correctamente; los guards no sustituyen a los permisos del backend.
-- [ ] **F1.10 — Crear registro, login y recuperación de contraseña.** Formularios con validaciones, errores comprensibles y prevención de envíos duplicados. Configurar callback y redirects en Auth del proyecto remoto para `localhost:4200` y Vercel; `config.toml` solo configura el stack local opcional. Comprobar el flujo de enlace caducado o inválido.
+- [ ] **F1.10 — Crear registro, login y recuperación de contraseña.** `auth.signUp` debe enviar solo metadata `username` + `invitation_code` (el trigger F1.6 valida en DB); no enviar/confiar en role, activo o email del metadata. Formularios con validaciones, errores comprensibles al traducir rechazos Auth y prevención de envíos duplicados. Configurar callback/confirmación email y redirects del Auth remoto para `localhost:4200` y Vercel; `config.toml` solo configura el stack local opcional. Comprobar enlace caducado o inválido.
 - [ ] **F1.11 — Crear edición del perfil propio.** Username, avatar y correo; usar Auth para cambiar email y mantener `profiles.email` sincronizado con el cambio efectivo, no con un valor arbitrario del cliente. Rol de solo lectura y sin botón de baja para players.
 - [ ] **F1.12 — Configurar Storage y sus permisos.** Escudos públicos y estrategia de avatares documentada; escrituras de escudos solo admin y de avatar solo propietario/admin según el flujo. Validar tipo/tamaño, rutas de objetos y borrado/sustitución de imágenes sin romper referencias.
 
@@ -314,4 +314,4 @@ Una tarea implementada se marca `[x]` solo cuando:
 
 ## Próxima acción recomendada
 
-Continuar con **F1.6–F1.8: registro seguro, primer admin y autorización/RLS**, priorizando el orden que garantice que ningún flujo funcione sin políticas de backend. F1.3–F1.5 están cerradas y probadas en Supabase remoto de desarrollo; Docker sigue siendo opcional. La asignación del virtual al publicar una jornada se implementa en F3 y sus puntos/estadísticas en F5; proteger la lectura de `player_*_replaced_id` forma parte de F1.8. No desplegar el endpoint de correo sin protegerlo ni dar por finalizada la fase 1 por tener únicamente las tablas diseñadas.
+Continuar con **F1.7 — preparar el primer admin** y luego **F1.8 — implementar RLS/permisos** antes de conectar la UI a datos. El trigger F1.6 ya impide altas sin invitación incluso si se omite la UI. F1.3–F1.6 están aplicadas/probadas en Supabase remoto de desarrollo; Docker sigue siendo opcional. La asignación del virtual al publicar se completa en F3 y su puntuación/estadísticas en F5/F6; proteger la lectura de `player_*_replaced_id` e `invitation_code_used` forma parte de F1.8. No desplegar el endpoint de correo sin protegerlo ni dar por finalizada la fase 1 por tener únicamente las tablas diseñadas.

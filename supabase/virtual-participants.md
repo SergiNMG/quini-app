@@ -52,4 +52,4 @@ Solo el participante real figura en `standings`. Estos comportamientos son regla
 
 La suite `tests/virtual_duel_participants.test.sql` contiene 27 casos: relaciones, ambos lados/orientaciones, doble virtual, referencias inválidas, perfil activo/inactivo, autocara virtual, puntuación/asimetría, cero puntos del virtual, inmutabilidad del snapshot/reactivación, no reescritura de duelos históricos, orden de triggers y aislamiento/no invocabilidad del trigger `SECURITY DEFINER`.
 
-Se ejecuta por `pnpm db:test` junto con las 62 pruebas F1.4 y las 15 del baseline: 104 en total, en el proyecto de desarrollo autorizado, con fixtures y usuarios Auth ficticios solo dentro de la transacción con rollback. No se resetea ni se puebla la base remota de forma persistente.
+Se ejecuta por `pnpm db:test` junto con las suites de registro F1.6, F1.4 y baseline: 127 comprobaciones en total, en el proyecto de desarrollo autorizado, con fixtures y usuarios Auth ficticios solo dentro de la transacción con rollback. No se resetea ni se puebla la base remota de forma persistente.

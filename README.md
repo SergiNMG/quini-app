@@ -70,7 +70,7 @@ pnpm exec supabase migration list --linked
 pnpm db:inspect:remote
 pnpm db:plan:remote       # dry-run; no aplica SQL
 pnpm run db:deploy:dev    # aplica migraciones SOLO al desarrollo autorizado
-pnpm db:test             # 104 comprobaciones pgTAP en 3 suites, con rollback y sin Docker
+pnpm db:test             # 127 comprobaciones pgTAP en 4 suites, con rollback y sin Docker
 pnpm run db:lint:dev
 pnpm run test:db-runner   # pruebas locales del parser y guardia de entorno
 ```

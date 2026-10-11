@@ -9,16 +9,16 @@ set local search_path = public, extensions;
 create temporary table tap_results (position integer primary key, line text);
 insert into pg_temp.tap_results select 0, plan(27);
 
-insert into auth.users (id) values
-  ('62000000-0000-4000-8000-000000000001'),
-  ('62000000-0000-4000-8000-000000000002'),
-  ('62000000-0000-4000-8000-000000000003'),
-  ('62000000-0000-4000-8000-000000000004');
-insert into public.profiles (id, username, email) values
-  ('62000000-0000-4000-8000-000000000001', '__sql_virtual_a', 'virtual-a@example.invalid'),
-  ('62000000-0000-4000-8000-000000000002', '__sql_virtual_b', 'virtual-b@example.invalid'),
-  ('62000000-0000-4000-8000-000000000003', '__sql_virtual_c', 'virtual-c@example.invalid'),
-  ('62000000-0000-4000-8000-000000000004', '__sql_virtual_d', 'virtual-d@example.invalid');
+insert into public.invitation_codes (id, code) values
+  ('94000000-0000-4000-8000-000000000001', 'SQL_F15_A'),
+  ('94000000-0000-4000-8000-000000000002', 'SQL_F15_B'),
+  ('94000000-0000-4000-8000-000000000003', 'SQL_F15_C'),
+  ('94000000-0000-4000-8000-000000000004', 'SQL_F15_D');
+insert into auth.users (id, email, raw_user_meta_data) values
+  ('62000000-0000-4000-8000-000000000001', 'virtual-a@example.invalid', jsonb_build_object('username', '__sql_virtual_a', 'invitation_code', 'SQL_F15_A')),
+  ('62000000-0000-4000-8000-000000000002', 'virtual-b@example.invalid', jsonb_build_object('username', '__sql_virtual_b', 'invitation_code', 'SQL_F15_B')),
+  ('62000000-0000-4000-8000-000000000003', 'virtual-c@example.invalid', jsonb_build_object('username', '__sql_virtual_c', 'invitation_code', 'SQL_F15_C')),
+  ('62000000-0000-4000-8000-000000000004', 'virtual-d@example.invalid', jsonb_build_object('username', '__sql_virtual_d', 'invitation_code', 'SQL_F15_D'));
 update public.profiles set activo = false
   where id in ('62000000-0000-4000-8000-000000000001', '62000000-0000-4000-8000-000000000004');
 insert into public.seasons (id, nombre, fecha_inicio)
