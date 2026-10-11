@@ -13,8 +13,8 @@ Esta tarea aporta invariantes de datos, **no** el motor de puntuación, las pol�
 - Las **12 FK** tienen `ON DELETE RESTRICT ON UPDATE RESTRICT`. No quedan rutas `CASCADE` o `SET NULL` entre los registros de la aplicación, incluida `profiles.id → auth.users.id`.
 - No borrar un usuario de Auth para implementar una baja: si tiene perfil, la FK lo impide. Desactivar mediante `profiles.activo = false`; no borrar perfil ni sus predicciones.
 - Triggers bloquean DELETE de perfiles, equipos, competiciones, temporadas, jornadas, partidos, predicciones y duelos. El criterio es conservador: se conservan todos los registros persistidos, no solo aquellos ya puntuados. Equipos/competiciones/perfiles usan soft delete; temporadas usan cierre.
-- Invitaciones consumidas conservan código, estado y usuario de consumo. Las no usadas pueden eliminarse mediante una operación de servidor autorizada; no se ha añadido una UI ni permiso de cliente para ello.
-- TRUNCATE está bloqueado por trigger en las nueve tablas, incluso con CASCADE. `DELETE` y `TRUNCATE` se revocan a `PUBLIC`, `anon`, `authenticated` y `service_role`.
+- Invitaciones consumidas conservan código, estado y usuario de consumo. La policy F1.8 permite a un admin activo borrar invitaciones aún no usadas; el trigger deniega la eliminación de las consumidas.
+- TRUNCATE está bloqueado por trigger en las nueve tablas, incluso con CASCADE. F1.4 revocó `DELETE`/`TRUNCATE` a roles API; F1.8 restaura privilegios completos a `service_role` de confianza, pero los triggers siguen bloqueando borrado físico de historia. Roles de cliente solo obtienen DELETE para invitaciones, protegido por RLS admin y por el trigger de consumo.
 - Las cuentas Auth sin perfil no quedan bloqueadas por esta FK; esto permite tratar fallos de registro en el flujo de F1.6 sin borrar perfiles existentes.
 
 No es una garantía frente a un propietario que modifique el esquema mediante DDL o desactive triggers explícitamente. Ningún flujo de aplicación debe hacerlo. Los resets remotos siguen prohibidos en el procedimiento normal.
@@ -56,7 +56,7 @@ No basta comprobar rangos: la restricción también rechaza cálculos parciales 
 - Una jornada nueva comienza ABIERTA y solo avanza `ABIERTA → EN_CURSO → FINALIZADA`, sin saltos ni reapertura.
 - No se crean jornadas en una temporada finalizada ni se cambia allí el estado de jornadas existentes.
 - Nuevos partidos, duelos o predicciones exigen temporada activa y jornada abierta.
-- Actualizar el pronóstico de una fila existente o los datos calculados de su duelo **sigue permitido por estas guardias**, incluso con jornada/temporada finalizada. La autorización, auditoría y recálculo atómico se implementan en F1.8/F5; no se permite cambiar propietario, partido o rivales para simular una corrección.
+- Actualizar el pronóstico de una fila existente o los datos calculados de su duelo **sigue permitido por estas guardias**, incluso con jornada/temporada finalizada. La policy F1.8 autoriza la corrección solo a admin activo; auditoría y recálculo atómico se implementan en F5. No se permite cambiar propietario, partido o rivales para simular una corrección.
 
 Finalizar una jornada todavía no comprueba sus cinco resultados ni la resolución de todos los duelos: F5 lo hará. Cerrar una temporada tampoco implementa aún la comprobación completa de jornadas pendientes de F6.5. Estas transiciones son la base, no las operaciones funcionales terminadas.
 
@@ -79,7 +79,7 @@ Esto evita validar un padre como abierto/activo mientras otra transacción lo ca
 1. Validar usuario activo, participación real, temporada activa, jornada abierta y ausencia de envío anterior.
 2. Bloquear la jornada, volver a comprobar el estado y validar que los cinco IDs son exactamente sus cinco partidos, sin duplicados ni partidos ajenos.
 3. Insertar las cinco filas de una vez. La unicidad `(match_id, player_id)` existente no garantiza un envío completo.
-4. Coordinar el bloqueo con la acción de inicio para que un cierre concurrente no deje un envío parcial/tardío. F1.8 controla quién puede insertar/corregir; no es un permiso implícito de estas guardias.
+4. Coordinar el bloqueo con la acción de inicio para que un cierre concurrente no deje un envío parcial/tardío. F1.8 controla quién puede leer/editar por rol; no es un permiso implícito de estas guardias.
 
 ### F5/F6 — Resolver, corregir y cerrar
 

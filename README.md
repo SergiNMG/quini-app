@@ -59,7 +59,7 @@ import { supabase } from './core/supabase/supabase.client';
 const { data, error } = await supabase.auth.getSession();
 ```
 
-Solo se exponen en el navegador `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY`. Configura Row Level Security (RLS) en cada tabla antes de consumirla desde el cliente. Nunca uses una `service_role` en Angular.
+Solo se exponen en el navegador `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY`. RLS y las policies están aplicadas al esquema actual de desarrollo; las futuras migraciones de tablas deben añadir grants/policies explícitos (los defaults para tablas públicas ya se han revocado). Nunca uses una `service_role` en Angular. No conectar nuevas pantallas hasta implementar sus operaciones seguras/atómicas.
 
 Trabajamos con **Angular local y Supabase remoto de desarrollo**, sin Docker obligatorio. El procedimiento completo está en **[Supabase: desarrollo remoto y migraciones](supabase/README.md)**. El esquema ejecutable está en `supabase/migrations/`; `context/schema.sql` es una referencia histórica.
 
@@ -70,12 +70,12 @@ pnpm exec supabase migration list --linked
 pnpm db:inspect:remote
 pnpm db:plan:remote       # dry-run; no aplica SQL
 pnpm run db:deploy:dev    # aplica migraciones SOLO al desarrollo autorizado
-pnpm db:test             # 140 comprobaciones pgTAP en 5 suites, con rollback y sin Docker
+pnpm db:test             # 200 comprobaciones pgTAP en 6 suites, con rollback y sin Docker
 pnpm run db:lint:dev
 pnpm run test:db-runner   # pruebas locales del parser y guardia de entorno
 ```
 
-Los comandos de despliegue/pruebas/lint verifican que el proyecto enlazado coincide con `supabase/development.json`. El identificador del proyecto no es una credencial. Baseline, integridad y rival virtual están **aplicados y validados en desarrollo**; F1.3–F1.5 están cerradas. Ver [garantías de integridad](supabase/integrity.md), [persistencia del rival virtual](supabase/virtual-participants.md), [alta por invitación](supabase/auth-signup.md) y [bootstrap del primer admin](supabase/bootstrap-first-admin.md). Las políticas RLS y la UI de Auth siguen pendientes.
+Los comandos de despliegue/pruebas/lint verifican que el proyecto enlazado coincide con `supabase/development.json`. El identificador del proyecto no es una credencial. Baseline, integridad, rival virtual, alta invitada, bootstrap y RLS están **aplicados y validados en desarrollo**; F1.3–F1.8 están cerradas. Ver [autorización/RLS](supabase/authorization.md), [integridad](supabase/integrity.md), [rival virtual](supabase/virtual-participants.md), [alta invitada](supabase/auth-signup.md) y [bootstrap admin](supabase/bootstrap-first-admin.md). La UI/Auth y gestión de perfiles siguen pendientes.
 
 Los fixtures se insertan únicamente dentro de la transacción de prueba y se revierten; no quedan usuarios ni catálogos ficticios persistentes. No ejecutar resets remotos ni subir seeds a producción. Antes del lanzamiento se creará un proyecto de producción separado.
 

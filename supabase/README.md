@@ -12,11 +12,12 @@ El proyecto actual se utiliza exclusivamente como **desarrollo**. Antes de incor
 
 - `migrations/`: esquema ejecutable versionado. Una migración aplicada no se modifica; los cambios posteriores son migraciones nuevas.
 - `seed.sql`: catálogos ficticios, sin usuarios ni secretos. El runner remoto los inserta dos veces dentro de una transacción que se revierte; no los despliega como datos persistentes.
-- `tests/*.test.sql`: suites pgTAP con `begin`/`rollback`; 15 baseline, 62 integridad/histórico, 27 rival virtual, 23 Auth/invitaciones y 13 bootstrap (140 total).
+- `tests/*.test.sql`: suites pgTAP con `begin`/`rollback`; 15 baseline, 62 integridad/histórico, 27 rival virtual, 23 Auth/invitaciones, 13 bootstrap y 60 RLS/grants (200 total).
 - [`integrity.md`](integrity.md): garantías de F1.4 y plan transaccional para F3/F4/F5.
 - [`virtual-participants.md`](virtual-participants.md): modelo persistente F1.5, permisos de lectura pendientes y reglas que se aplicarán en F5/F6.
 - [`auth-signup.md`](auth-signup.md): contrato y atomicidad del registro F1.6.
 - [`bootstrap-first-admin.md`](bootstrap-first-admin.md): procedimiento server-side F1.7; RPC one-time y script local guarded `scripts/bootstrap-first-admin.mjs`.
+- [`authorization.md`](authorization.md): grants, helpers de identidad, policies por tabla, RPC privados y límites pendientes para operaciones transaccionales.
 - `test-support/baseline-state.sql`: conteos y privilegios comparados antes/después de las pruebas, sin exportar registros personales.
 - `inspect-schema.sql`: inventario remoto de solo lectura.
 - `../scripts/supabase-development.mjs`: runner sin Docker, validación del proyecto de desarrollo y resultados TAP.
@@ -86,7 +87,7 @@ El runner **no considera suficiente el exit code del SQL**: exige un plan comple
 
 No ejecutar las pruebas contra producción, no usar `--include-seed` en un push remoto y **nunca ejecutar `db reset --linked` o `db reset --db-url`**. Las fixtures Auth de las suites son ficticias y se revierten. El trigger de registro F1.6 está cubierto aquí; crear/promover el primer admin es F1.7, y RLS/permisos de las tablas son F1.8.
 
-Estas pruebas cubren baseline, integridad, altas Auth/invitación y rival virtual, no la autorización funcional del resto de operaciones: F1.8 añadirá casos de lectura/escritura por rol y protegerá la proyección privada de perfiles e IDs de sustitución. No validan todavía reglas de puntuación ni las operaciones atómicas de cinco partidos.
+Estas pruebas cubren baseline, integridad, altas Auth/invitación, rival virtual, bootstrap y permisos/lecturas RLS por rol. No validan todavía reglas de puntuación ni las operaciones atómicas de cinco partidos. Las políticas de Storage permanecen pendientes en F1.12.
 
 ## Evidencia de cierre de F1.3
 
@@ -106,19 +107,21 @@ Validación realizada en el proyecto de desarrollo autorizado:
 
 No se ha hecho ningún reset remoto. Esta validación reemplaza el requisito anterior de reconstrucción local con Docker: **F1.3 está cerrada**. No afirma haber reconstruido una base vacía local o haber probado un rollback del despliegue; son comprobaciones diferentes y no obligatorias en el flujo remoto acordado.
 
-El baseline contiene las tablas/enums iniciales con tipos calificados en `public`, índices, función/trigger y RLS. Las migraciones F1.4–F1.7 protegen el histórico, persisten lados virtuales y preparan el bootstrap restringido del primer admin; RLS funcional y operaciones de juego transaccionales siguen pendientes. No abrir la aplicación a jugadores reales hasta completar esos permisos y flujos.
+El baseline contiene las tablas/enums iniciales con tipos calificados en `public`, índices, función/trigger y RLS habilitado. F1.4–F1.7 añaden integridad, historial, virtual y bootstrap; F1.8 instala grants/policies en las nueve tablas y deja el alta segura Auth operativa. Sigue sin ser una app de producción: faltan CRUD/UI, guards, Storage, operaciones atómicas de jornada/predicción y motor de puntuación. No abrir el grupo hasta completar esos flujos.
 
-## Evidencia de cierre de F1.4–F1.7
+## Evidencia de cierre de F1.4–F1.8
 
 - `20261009133127_integrity_and_history.sql` protege identidades/histórico e integra checks de valores/estados.
 - `20261009140144_virtual_duel_participants.sql` persiste lados virtuales y su procedencia.
 - `20261009140825_virtual_duel_lock_order.sql` ordena triggers padre→perfiles para evitar inversión de bloqueos.
 - `20261009143227_invited_signup_profile.sql` exige y consume invitación al insertar Auth y crea perfil atomizado; no aplica role/activo de metadata.
 - `20261011115749_bootstrap_first_admin.sql` instala una RPC service_role-only, protegida con advisory lock, para promoción única de PLAYER activo e email confirmado.
+- `20261011123021_authorization_rls.sql` revoca grants predeterminados y añade policies, helpers de perfil activo y RPC acotadas para perfiles privados/admin.
+- `20261011130008_private_schema_default_privileges.sql` evita que los futuros helpers `private` hereden EXECUTE de roles cliente.
 
-Pasan **140/140 pruebas SQL en cinco suites** (baseline, integridad, virtual, Auth/invitaciones y bootstrap), repetidas en ejecuciones completas; lint sin errores, 9/9 pruebas del runner, 2/2 Angular y build correctos. Las seis migraciones coinciden con el historial remoto y el dry-run final no tiene pendientes. No se ha ejecutado reset remoto ni dejado fixtures/usuarios ficticios persistentes. El script F1.7 no se ha ejecutado para crear un usuario/admin real.
+Pasan **200/200 pruebas SQL en seis suites**, repetidas en ejecuciones completas; lint sin errores, 9/9 pruebas del runner, 2/2 Angular y build correctos. Las ocho migraciones coinciden con el historial remoto y el dry-run final no tiene pendientes. No se ha ejecutado reset remoto ni dejado fixtures/usuarios ficticios persistentes. El script F1.7 no se ha ejecutado para crear un usuario/admin real.
 
-Detalles: [integridad y preservación (F1.4)](integrity.md), [persistencia del rival virtual (F1.5)](virtual-participants.md), [alta segura (F1.6)](auth-signup.md) y [bootstrap del primer admin (F1.7)](bootstrap-first-admin.md). No se ha creado ningún usuario administrador real. Atomicidad, seguridad de lectura y cálculo concurrente siguen en F3/F4/F5/F1.8.
+Detalles: [integridad (F1.4)](integrity.md), [rival virtual (F1.5)](virtual-participants.md), [alta segura (F1.6)](auth-signup.md), [bootstrap admin (F1.7)](bootstrap-first-admin.md) y [grants/policies RLS (F1.8)](authorization.md). No se ha creado ningún usuario administrador real. Storage y operaciones transaccionales de jornada/pronóstico/puntuación siguen en F1.12/F3/F4/F5.
 
 ## Añadir la siguiente migración
 

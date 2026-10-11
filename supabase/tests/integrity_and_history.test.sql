@@ -63,12 +63,15 @@ insert into pg_temp.tap_results select 12, lives_ok($statement$delete from publi
 insert into pg_temp.tap_results select 13, throws_ok($statement$truncate public.teams cascade$statement$, '55000', null::text, 'TRUNCATE CASCADE cannot erase history');
 
 insert into pg_temp.tap_results select 14, ok(not exists(
-  select 1 from unnest(array['anon','authenticated','service_role']) r(role_name)
+  select 1 from unnest(array['anon','authenticated']) r(role_name)
   cross join unnest(array['public.profiles','public.invitation_codes','public.competitions',
     'public.teams','public.seasons','public.matchdays','public.matches','public.predictions','public.duels']) t(table_name)
-  where has_table_privilege(r.role_name,t.table_name,'DELETE')
-    or has_table_privilege(r.role_name,t.table_name,'TRUNCATE')
-), 'API roles have no ordinary DELETE or TRUNCATE privileges');
+  where (r.role_name = 'anon' or t.table_name <> 'public.invitation_codes')
+    and (has_table_privilege(r.role_name,t.table_name,'DELETE')
+      or has_table_privilege(r.role_name,t.table_name,'TRUNCATE'))
+) and has_table_privilege('authenticated','public.invitation_codes','DELETE')
+  and not has_table_privilege('authenticated','public.invitation_codes','TRUNCATE'),
+  'Clients cannot hard-delete history; admin invitation DELETE remains trigger-limited');
 
 insert into pg_temp.tap_results select 15, throws_ok($statement$update public.competitions set id='ffffffff-ffff-4fff-8fff-ffffffffffff' where id='10000000-0000-4000-8000-000000000001'$statement$, '55000', null::text, 'Catalog identity is immutable');
 

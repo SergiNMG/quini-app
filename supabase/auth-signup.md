@@ -32,7 +32,7 @@ La prueba SQL verifica ausencia/invalidez/reuso del código, username en blanco,
 
 - La validación autoritativa ocurre en PostgreSQL al crear `auth.users`, no en la UI ni en una llamada pública de “prevalidar código”. Las políticas RLS de `invitation_codes` no habilitan por sí mismas el sign-up; la función `SECURITY DEFINER` está aislada con `search_path = ''`, referencias cualificadas y EXECUTE solo para `supabase_auth_admin`.
 - Nunca usar `service_role` en Angular. F1.6 no introduce un endpoint frontend con credenciales administrativas ni Edge Function para el alta.
-- `profiles.invitation_code_used` guarda el código utilizado por trazabilidad. F1.8 no debe exponer esa columna, email, role o activo a otros jugadores; lectura pública de filas completas de perfiles está prohibida.
+- `profiles.invitation_code_used` guarda el código utilizado por trazabilidad. Las policies/grants F1.8 no exponen esta columna ni email/role/activo a otros jugadores; la lectura directa de perfiles limita columnas a id/username/avatar y las RPC de perfil son acotadas.
 - RLS y permisos del resto de tablas, creación/manual-promoción del primer admin y UI de Auth son tareas separadas (F1.7–F1.10). La función no hace admins desde `role` enviado por el cliente.
 - F1.6 no modifica ni consume códigos existentes fuera del sign-up. Si Auth falla/username está ocupado, no se pierde la invitación.
 

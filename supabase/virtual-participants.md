@@ -35,7 +35,7 @@ El trigger comprueba la condición observada al insertar, pero la operación tra
 
 ## Visibilidad y API
 
-Los campos `player_*_replaced_id` contienen IDs reales de perfiles desactivados y no deben exponerse mediante un `SELECT *` autorizado a players. F1.8 debe diseñar proyección segura (column grants, view `security_invoker`/RPC controlada o consulta equivalente) que permita mostrar `jugador_undefined` sin filtrar los IDs privados, correo o estado de perfiles ajenos. Tampoco se puede confiar únicamente en que el frontend oculte esos campos.
+Los campos `player_*_replaced_id` contienen IDs reales de perfiles desactivados y no se conceden por SELECT directo a players. F1.8 aplica grants por columna y `admin_list_duels()` devuelve las referencias solo a un admin activo; el frontend del grupo debe representar el lado NULL como `jugador_undefined` sin leer el ID privado.
 
 ## Puntos, fallos y clasificación aún no implementados
 
