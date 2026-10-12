@@ -51,13 +51,17 @@ Abre `http://localhost:4200`.
 
 ## Supabase
 
-El singleton está en `src/app/core/supabase/supabase.client.ts`:
+El cliente singleton se crea al inyectar `SUPABASE_CLIENT` de `src/app/core/supabase/supabase.client.ts` (en un contexto de inyección Angular):
 
 ```ts
-import { supabase } from './core/supabase/supabase.client';
+import { inject } from '@angular/core';
+import { SUPABASE_CLIENT } from './core/supabase/supabase.client';
 
-const { data, error } = await supabase.auth.getSession();
+// Campo de un componente o servicio Angular:
+private readonly supabase = inject(SUPABASE_CLIENT);
 ```
+
+F1.9 añade `AuthService` con signals, restauración/eventos Auth, login/logout y guards que verifican el perfil activo vía `get_my_profile()`. Rutas `/app` y `/admin` protegidas; `/auth/login` y `/auth/callback` siguen siendo placeholders hasta F1.10. Ver [sesión y rutas](context/07-auth-session.md) para el contrato, redirecciones, pruebas y límites.
 
 Solo se exponen en el navegador `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY`. RLS y las policies están aplicadas al esquema actual de desarrollo; las futuras migraciones de tablas deben añadir grants/policies explícitos (los defaults para tablas públicas ya se han revocado). Nunca uses una `service_role` en Angular. No conectar nuevas pantallas hasta implementar sus operaciones seguras/atómicas.
 
@@ -75,7 +79,7 @@ pnpm run db:lint:dev
 pnpm run test:db-runner   # pruebas locales del parser y guardia de entorno
 ```
 
-Los comandos de despliegue/pruebas/lint verifican que el proyecto enlazado coincide con `supabase/development.json`. El identificador del proyecto no es una credencial. Baseline, integridad, rival virtual, alta invitada, bootstrap y RLS están **aplicados y validados en desarrollo**; F1.3–F1.8 están cerradas. Ver [autorización/RLS](supabase/authorization.md), [integridad](supabase/integrity.md), [rival virtual](supabase/virtual-participants.md), [alta invitada](supabase/auth-signup.md) y [bootstrap admin](supabase/bootstrap-first-admin.md). La UI/Auth y gestión de perfiles siguen pendientes.
+Los comandos de despliegue/pruebas/lint verifican que el proyecto enlazado coincide con `supabase/development.json`. El identificador del proyecto no es una credencial. Baseline, integridad, rival virtual, alta invitada, bootstrap y RLS están **aplicados y validados en desarrollo**; F1.3–F1.8 están cerradas. Ver [autorización/RLS](supabase/authorization.md), [integridad](supabase/integrity.md), [rival virtual](supabase/virtual-participants.md), [alta invitada](supabase/auth-signup.md) y [bootstrap admin](supabase/bootstrap-first-admin.md). F1.9 añade estado de sesión/guards en Angular; los formularios Auth (F1.10), gestión de perfiles y pantallas funcionales siguen pendientes.
 
 Los fixtures se insertan únicamente dentro de la transacción de prueba y se revierten; no quedan usuarios ni catálogos ficticios persistentes. No ejecutar resets remotos ni subir seeds a producción. Antes del lanzamiento se creará un proyecto de producción separado.
 

@@ -32,6 +32,12 @@
 - `service_role` key solo en Edge Functions/entornos de servidor, nunca en el frontend Angular.
 - Redirect URLs de Auth apuntando al dominio de Vercel (+ localhost:4200 en desarrollo), configuradas en el Dashboard remoto en F1.10. `config.toml` solo afecta al stack local opcional y todavía contiene el puerto 3000; no debe confundirse con la configuración remota.
 
+## Estado Auth en Angular (F1.9)
+
+- `SUPABASE_CLIENT` es singleton lazy por inyección; `AUTH_BACKEND` permite probar sin red/credenciales. `AuthService` expone signals y usa `get_my_profile()` para rol/actividad actuales, no metadata.
+- Guards de miembro/admin e hijos revalidan perfil antes de navegar. Los destinos Auth y privados son mínimos hasta F1.10/F1.14; RLS sigue autorizando cada petición. No se añade Realtime ni una librería de estado.
+- Contrato, redirecciones y límites en [sesión y rutas](07-auth-session.md).
+
 ## Integración de PrimeNG
 
 - Verificar los peer dependencies y elegir una versión compatible con Angular 21 al instalar; no actualizar Angular automáticamente para incorporar la librería.

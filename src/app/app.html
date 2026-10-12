@@ -1,26 +1,33 @@
-<main class="min-h-screen bg-slate-950 text-slate-100">
-  <section class="mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-6 py-16 sm:px-10">
-    <span class="mb-5 w-fit rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-sm font-medium text-emerald-300">
-      Angular · Supabase · Vercel
-    </span>
-    <h1 class="max-w-3xl text-5xl font-bold tracking-tight sm:text-7xl">{{ title() }}</h1>
-    <p class="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
-      La base del proyecto está lista. Configura Supabase y las variables de entorno para comenzar a construir.
-    </p>
-    <div class="mt-10 grid gap-4 sm:grid-cols-3">
-      <article class="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
-        <h2 class="font-semibold">Supabase</h2>
-        <p class="mt-2 text-sm text-slate-400">Cliente configurado para Auth, base de datos y Storage.</p>
-      </article>
-      <article class="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
-        <h2 class="font-semibold">Tailwind CSS</h2>
-        <p class="mt-2 text-sm text-slate-400">Sistema de estilos utilitario listo para usar.</p>
-      </article>
-      <article class="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
-        <h2 class="font-semibold">Resend</h2>
-        <p class="mt-2 text-sm text-slate-400">Función serverless preparada para enviar correos.</p>
-      </article>
+<div class="min-h-screen bg-slate-950 text-slate-100">
+  <header class="border-b border-slate-800 px-6 py-5">
+    <div class="mx-auto flex max-w-5xl flex-wrap items-center gap-4">
+      <a routerLink="/app" class="text-xl font-bold">Quini</a>
+      @if (auth.isAuthenticated()) {
+        <nav aria-label="Navegación principal" class="flex gap-4">
+          <a routerLink="/app" class="text-emerald-300">Inicio</a>
+          @if (auth.isAdmin()) {
+            <a routerLink="/admin" class="text-emerald-300">Administración</a>
+          }
+        </nav>
+        <span class="ml-auto text-sm text-slate-300">{{ auth.profile()?.username }}</span>
+        <button
+          type="button"
+          (click)="logout()"
+          [disabled]="signingOut()"
+          class="rounded border border-slate-600 px-3 py-2 text-sm disabled:opacity-50"
+        >
+          Cerrar sesión
+        </button>
+      }
     </div>
-  </section>
-</main>
-<router-outlet />
+  </header>
+  <main class="mx-auto max-w-5xl px-6 py-10">
+    @if (auth.status() === 'loading') {
+      <p role="status" aria-live="polite" class="py-10 text-slate-300">Comprobando sesión…</p>
+    }
+    <!-- Conservar el outlet durante la carga sin mostrar contenido privado obsoleto. -->
+    <div [hidden]="hideContent()">
+      <router-outlet />
+    </div>
+  </main>
+</div>
