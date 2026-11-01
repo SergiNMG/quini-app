@@ -61,7 +61,7 @@ import { SUPABASE_CLIENT } from './core/supabase/supabase.client';
 private readonly supabase = inject(SUPABASE_CLIENT);
 ```
 
-F1.9 añade `AuthService` con signals, restauración/eventos Auth, login/logout y guards que verifican el perfil activo vía `get_my_profile()`. Rutas `/app` y `/admin` protegidas; `/auth/login` y `/auth/callback` siguen siendo placeholders hasta F1.10. Ver [sesión y rutas](context/07-auth-session.md) para el contrato, redirecciones, pruebas y límites.
+F1.9 añade `AuthService` con signals, restauración/eventos Auth y guards que verifican el perfil activo vía `get_my_profile()`. F1.10 implementa `/auth/login`, `/auth/register`, `/auth/forgot-password` y `/auth/callback` (confirmación y contraseña nueva), sobre las rutas privadas `/app` y `/admin`. Ver [sesión y rutas](context/07-auth-session.md) y [formularios/callback y configuración remota](context/08-auth-forms.md). Pasan 120 tests Angular y build; F1.10 sigue abierta hasta configurar y comprobar correo/redirects en Supabase remoto y Vercel. No se han creado cuentas ni enviado correos en esta entrega.
 
 Solo se exponen en el navegador `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY`. RLS y las policies están aplicadas al esquema actual de desarrollo; las futuras migraciones de tablas deben añadir grants/policies explícitos (los defaults para tablas públicas ya se han revocado). Nunca uses una `service_role` en Angular. No conectar nuevas pantallas hasta implementar sus operaciones seguras/atómicas.
 
@@ -79,7 +79,7 @@ pnpm run db:lint:dev
 pnpm run test:db-runner   # pruebas locales del parser y guardia de entorno
 ```
 
-Los comandos de despliegue/pruebas/lint verifican que el proyecto enlazado coincide con `supabase/development.json`. El identificador del proyecto no es una credencial. Baseline, integridad, rival virtual, alta invitada, bootstrap y RLS están **aplicados y validados en desarrollo**; F1.3–F1.8 están cerradas. Ver [autorización/RLS](supabase/authorization.md), [integridad](supabase/integrity.md), [rival virtual](supabase/virtual-participants.md), [alta invitada](supabase/auth-signup.md) y [bootstrap admin](supabase/bootstrap-first-admin.md). F1.9 añade estado de sesión/guards en Angular; los formularios Auth (F1.10), gestión de perfiles y pantallas funcionales siguen pendientes.
+Los comandos de despliegue/pruebas/lint verifican que el proyecto enlazado coincide con `supabase/development.json`. El identificador del proyecto no es una credencial. Baseline, integridad, rival virtual, alta invitada, bootstrap y RLS están **aplicados y validados en desarrollo**; F1.3–F1.8 están cerradas. Ver [autorización/RLS](supabase/authorization.md), [integridad](supabase/integrity.md), [rival virtual](supabase/virtual-participants.md), [alta invitada](supabase/auth-signup.md) y [bootstrap admin](supabase/bootstrap-first-admin.md). F1.9 añade estado de sesión/guards y F1.10 añade formularios/callback en Angular; su validación real de Auth/correo sigue pendiente, al igual que gestión de perfiles y pantallas funcionales.
 
 Los fixtures se insertan únicamente dentro de la transacción de prueba y se revierten; no quedan usuarios ni catálogos ficticios persistentes. No ejecutar resets remotos ni subir seeds a producción. Antes del lanzamiento se creará un proyecto de producción separado.
 

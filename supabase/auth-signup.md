@@ -2,7 +2,7 @@
 
 ## Contrato de registro
 
-El frontend futuro usará `supabase.auth.signUp` (email/password) con este `options.data` mínimo:
+El frontend F1.10 usa `supabase.auth.signUp` (email/password) con este `options.data` mínimo (ver [formularios/callback](../context/08-auth-forms.md); configuración y prueba real de correo aún pendientes):
 
 ```ts
 {

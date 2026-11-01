@@ -1,7 +1,7 @@
 import { computed, DestroyRef, inject, Injectable, signal } from '@angular/core';
 import { AuthError, type Session } from '@supabase/supabase-js';
 import { AUTH_BACKEND } from './auth.backend';
-import type { AuthStatus, CurrentProfile } from './auth.types';
+import type { AuthStatus, CurrentProfile, SessionResult } from './auth.types';
 
 interface AuthState {
   status: AuthStatus;
@@ -114,6 +114,37 @@ export class AuthService {
     const error = await work;
     await this.whenReady();
     return error;
+  }
+
+  /** Registro/callback comparten la publicación segura de sesión con login. */
+  async authenticate(action: () => Promise<SessionResult>): Promise<SessionResult> {
+    await this.whenReady();
+    const operation = ++this.operation;
+    const revision = this.invalidate();
+    this.setState('loading', this.session());
+    const work = Promise.resolve().then(async (): Promise<SessionResult> => {
+      try {
+        const result = await action();
+        if (this.isCurrent(operation, revision)) {
+          if (result.error) this.setState('anonymous', null);
+          else this.scheduleSession(result.data.session);
+        }
+        return result;
+      } catch {
+        if (this.isCurrent(operation, revision)) this.setState('anonymous', null);
+        return {
+          data: { session: null },
+          error: new AuthError('No se ha podido conectar con el servicio de autenticación.'),
+        };
+      }
+    });
+    this.pending = work.then(() => {});
+    const result = await work;
+    await this.whenReady();
+    if (this.destroyed || operation !== this.operation) {
+      return { data: { session: null }, error: new AuthError('La operación ha sido cancelada.') };
+    }
+    return result;
   }
 
   async logout(): Promise<AuthError | null> {

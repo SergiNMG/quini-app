@@ -10,7 +10,10 @@ export const SUPABASE_CLIENT = new InjectionToken<SupabaseClient>('SUPABASE_CLIE
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: true,
+        flowType: 'pkce',
+        // Callback explícito: no consumir silenciosamente enlaces fallidos
+        // ni confundir una sesión anterior con la sesión del enlace.
+        detectSessionInUrl: false,
       },
     }),
 });

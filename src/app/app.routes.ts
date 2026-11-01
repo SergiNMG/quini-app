@@ -8,27 +8,31 @@ import {
 } from './core/auth/auth.guards';
 
 const sessionPage = () => import('./features/session/session-page').then((m) => m.SessionPage);
+const authFormPage = () => import('./features/session/auth-form-page').then((m) => m.AuthFormPage);
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'app' },
   {
     path: 'auth/login',
     canActivate: [guestGuard],
-    loadComponent: sessionPage,
-    data: {
-      title: 'Acceso a Quini',
-      description:
-        'La sesión y los permisos están preparados. El formulario de login, registro con invitación y recuperación se implementará en F1.10.',
-    },
+    loadComponent: authFormPage,
+    data: { mode: 'login' },
+  },
+  {
+    path: 'auth/register',
+    canActivate: [guestGuard],
+    loadComponent: authFormPage,
+    data: { mode: 'signup' },
+  },
+  {
+    path: 'auth/forgot-password',
+    loadComponent: authFormPage,
+    data: { mode: 'reset' },
   },
   {
     path: 'auth/callback',
-    loadComponent: sessionPage,
-    data: {
-      title: 'Confirmación de acceso',
-      description:
-        'Supabase procesa la sesión del enlace. La validación de enlaces y el flujo de recuperación se completarán en F1.10.',
-    },
+    loadComponent: () =>
+      import('./features/session/auth-callback-page').then((m) => m.AuthCallbackPage),
   },
   {
     path: 'auth/access',

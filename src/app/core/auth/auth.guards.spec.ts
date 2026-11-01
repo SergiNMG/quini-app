@@ -36,11 +36,11 @@ describe('Auth routes and guards', () => {
     expect(router.parseUrl(router.url).queryParams['returnUrl']).toBe('/admin');
   });
 
-  it('allows anonymous users to visit the login placeholder', async () => {
+  it('allows anonymous users to visit the login form', async () => {
     const { harness, router } = await setup();
     await harness.navigateByUrl('/auth/login');
     expect(router.url).toBe('/auth/login');
-    expect(harness.routeNativeElement?.textContent).toContain('F1.10');
+    expect(harness.routeNativeElement?.querySelector('input[type="password"]')).toBeTruthy();
   });
 
   it('restores a PLAYER on a direct private URL', async () => {

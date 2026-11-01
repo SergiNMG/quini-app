@@ -1,0 +1,53 @@
+:host {
+  display: block;
+}
+.auth-card {
+  max-width: 32rem;
+  margin-inline: auto;
+  padding: 1.5rem;
+  border: 1px solid #334155;
+  border-radius: 0.75rem;
+  background: #0f172a;
+}
+label {
+  display: block;
+  margin-bottom: 0.4rem;
+}
+input {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.8rem;
+  background: #020617;
+  border: 1px solid #64748b;
+  border-radius: 0.4rem;
+  color: #f1f5f9;
+}
+input[aria-invalid='true'] {
+  border-color: #fda4af;
+}
+button {
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
+  border-radius: 0.4rem;
+  background: #6ee7b7;
+  color: #020617;
+  font-weight: 600;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+a {
+  color: #6ee7b7;
+  text-decoration: underline;
+}
+:where(input, button, a):focus-visible {
+  outline: 3px solid #34d399;
+  outline-offset: 3px;
+}
+.field-error {
+  font-size: 0.875rem;
+  color: #fda4af;
+  margin-top: 0.3rem;
+}

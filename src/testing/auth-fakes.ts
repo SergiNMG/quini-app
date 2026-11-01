@@ -50,6 +50,22 @@ export function fakeBackend(session: Session | null = null) {
       .fn<AuthBackend['signInWithPassword']>()
       .mockResolvedValue({ data: { session: fakeSession() }, error: null }),
     signOut: vi.fn<AuthBackend['signOut']>().mockResolvedValue({ error: null }),
+    signUp: vi
+      .fn<AuthBackend['signUp']>()
+      .mockResolvedValue({ data: { session: null }, error: null }),
+    resetPasswordForEmail: vi
+      .fn<AuthBackend['resetPasswordForEmail']>()
+      .mockResolvedValue({ error: null }),
+    updatePassword: vi.fn<AuthBackend['updatePassword']>().mockResolvedValue({ error: null }),
+    exchangeCode: vi
+      .fn<AuthBackend['exchangeCode']>()
+      .mockResolvedValue({ data: { session: fakeSession(), redirectType: null }, error: null }),
+    verifyEmailToken: vi
+      .fn<AuthBackend['verifyEmailToken']>()
+      .mockResolvedValue({ data: { session: fakeSession() }, error: null }),
+    setSession: vi
+      .fn<AuthBackend['setSession']>()
+      .mockResolvedValue({ data: { session: fakeSession() }, error: null }),
   } satisfies AuthBackend;
   return {
     backend,

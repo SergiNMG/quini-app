@@ -1,5 +1,7 @@
 # F1.9 — Estado de sesión y rutas
 
+> Estado histórico de entrega F1.9. F1.10 ya sustituye los placeholders de login/callback y añade registro/recuperación: ver [formularios Auth](08-auth-forms.md). El cliente ahora usa PKCE con callback explícito (`detectSessionInUrl: false`); su configuración/correo real aún está pendiente.
+
 ## Alcance implementado
 
 `AuthService` en `src/app/core/auth/auth.service.ts` mantiene estado con signals de solo lectura (`status`, `session`, `user`, `profile`, `error`, `isAuthenticated`, `isAdmin`). `isAuthenticated` significa **miembro activo verificado**, no solo que exista una sesión Auth. `login(email, password)` y `logout()` devuelven `AuthError | null`; los formularios que los consumen son F1.10.
